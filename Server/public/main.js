@@ -8,7 +8,9 @@
 var socket;
 
 //develop url. Change for deployment.
-var url= "http://192.168.12.76:3000/api/";
+var url= "https://physikit.herokuapp.com/api/";
+
+//var url = "http://localhost:3000/api/";
 
 //login the user with id (id: 1-5 depending on famility/kit; can be changed to more complex
 //password and username)
@@ -48,7 +50,7 @@ function connect_socket (token) {
     console.log("Log in response:" + token.token);
 
     //Connect to server with secret
-    socket = io.connect('http://localhost:3000', {
+    socket = io.connect('', {
         'query': 'token=' + token.token
     });
 

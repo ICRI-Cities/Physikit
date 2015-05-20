@@ -88,7 +88,7 @@ var findAllbyId = function(collection,id,callback) {
 
 //Find all in collection
 var findAll = function(collection,callback) {
-    mongoClient.connect(url, function(err, db) {
+    mongoClient.connect(keys.databaseUrl, function(err, db) {
         assert.equal(null, err);
         findDocuments(db,collection,function(list) {
             db.close();

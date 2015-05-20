@@ -15,7 +15,7 @@ var Keys = function(){
         buzzDeviceToken:'',
         moveDeviceToken:''
     };
-    this.databaseUrl ='mongodb://localhost:27017/test';
+    this.databaseUrl ='mongodb://physikit:physikit@ds031942.mongolab.com:31942/physikit';
     this.jwtKey = 'fdsldsoiewuroiewuriqwjdshfksh'
 }
 

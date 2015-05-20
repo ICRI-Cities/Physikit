@@ -25,7 +25,7 @@ var Keys = require('./privateKeys');
 var keys = new Keys();
 
 //User app as web sever that serves public folder
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, './public')));
 
 //Important rest call used for authentication.
 app.get('/api/:id', function(req, res) {
@@ -88,7 +88,7 @@ io.on('connection', function(socket){
     });
 });
 
-httpApp.listen(3000, function(){
+httpApp.listen(process.env.PORT || 3000, function(){
     console.log('server running on *:3000');
 });
 
@@ -180,18 +180,12 @@ app.get('/api/:id/rules/:smartSensor/:smartId/:sensor/:condition/:output',functi
     });
 });
 
-app.get('/api/:id/users/:newId/:name',function(req, res){
-    CheckId(req.params.id, function(result) {
-        if (result == "") {
-            res.send("405 access denied")
-            return;
-        }
+app.get('/api/users/:newId/:name',function(req, res){
 
-        var usr = new User("user", req.params.newId);
-        usr.name = req.params.name;
-        db.Add("users", usr);
-        res.send(usr);
-    });
+    var usr = new User("user", req.params.newId);
+    usr.name = req.params.name;
+    db.Add("users", usr);
+    res.send(usr);
 });
 
 app.get('/api/:id/rules/',function(req, res){
