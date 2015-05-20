@@ -1,0 +1,4 @@
+-> install mongoDB with default "test" database
+-> run nodejs Webserver.js
+-> localhost:3000 in browser to access website
+-> use rest api to add content to db or install mongo-express node.js app
