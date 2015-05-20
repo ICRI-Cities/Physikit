@@ -1,4 +1,4 @@
-//IWebserver
+//Webserver
 var express= require('express');
 var path= require('path');
 var app = express();
@@ -111,6 +111,7 @@ db.on('inserted',function(collection,entity){
     }
 });
 
+//Todo
 function RunRules(){
     db.FindAll("rules", function (list) {
         list.forEach(function(rule) {
