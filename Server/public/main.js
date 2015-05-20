@@ -27,7 +27,7 @@ function Login(url,id){
         if(secret =="405 access denied")
         {
             //We can do UI stuff to show bad login
-            console.log(secret);
+            console.slog(ecret);
             return;
         }
 
@@ -37,17 +37,14 @@ function Login(url,id){
         //Set a cookie with our id, NOT the secret
         $.cookie("physikit",id);
 
-        console.log("send id "+ id);
-
         //Uodate UI
         SwitchLogin(false,id);
     });
 }
 
-
 //Connect the socket with secret
 function connect_socket (token) {
-    console.log("Log in response:" + token.token);
+    console.log("Log in response: " + token.token);
 
     //Connect to server with secret
     socket = io.connect('', {
@@ -56,8 +53,8 @@ function connect_socket (token) {
 
     //Handles "sck" messages related to smart citizen api
     //updates send by our app over socket.io
-    socket.on('sck', function(msg){
-        HandleSmartCitizenMessage(msg);
+    socket.on('sck', function(id,data){
+        HandleSmartCitizenMessage(id,data);
     });
 
     //Handles "spm" messages related to physikit api
@@ -93,8 +90,8 @@ function connect_socket (token) {
 //mode: 0-9
 //setting: 0-9
 //value: 0-9
-function Send(id,sensor,mode,setting,value){
-    socket.emit('message',id,sensor,mode,setting,value);
+function Send(id,sensor,mode,setting,args,value){
+    socket.emit('message',id,sensor,mode,setting,args,value);
 };
 
 
@@ -147,7 +144,9 @@ $(document).ready(function() {
 });
 
 //Handles Smart Citizen message and updates UI
-function HandleSmartCitizenMessage(data){
+function HandleSmartCitizenMessage(id,data){
+
+    //Todo put them in separate containers
         console.log(data.device.last_insert_datetime);
         $("#sc").html(
             "You are currently connected to a device named "
@@ -164,10 +163,12 @@ function HandleSmartCitizenMessage(data){
 
 //Handles Physikit Messages
 function HandlePhysikitMessage(source,data){
-    var msg = data.data;
+    console.log(source + " cube message: "+data);
+    var msg = data;
     var mode = msg.substring(0,1);
     var setting = msg.substring(2,3);
-    var value = msg.substring(4,msg.toString().length);
+    var args = msg.substring(4,5);
+    var value = msg.substring(6,msg.toString().length);
     var checkState = (value > 0);
 
     if(mode == 0){
@@ -190,7 +191,7 @@ function HandlePhysikitMessage(source,data){
 //Handle Rule Messages
 function HandleRuleMessage(data){
     var msg = data;
-    console.log(msg);
+    console.log("Rule message: "+msg);
 };
 
 //Handle UI switches to control Kit
@@ -205,7 +206,7 @@ function HandleMainSwitch(sensor,state,sendmessage){
     // - turn off the alert switch if needed
     if(on){
         if(sendmessage)
-            Send(1,sensor,0,0,value);
+            Send(1,sensor,0,0,0,value);
         $('#'+sensor+'Slider').slider('value', value);
         $('#'+sensor+'SliderValue').text(value);
         if($('#'+sensor+'AlertCheckbox').get(0).checked)
@@ -218,7 +219,7 @@ function HandleMainSwitch(sensor,state,sendmessage){
     if(!on){
         if(!$('#'+sensor+'AlertCheckbox').get(0).checked) {
             if(sendmessage)
-                Send(1,sensor,0,0,value);
+                Send(1,sensor,0,0,0,value);
         }
         $('#'+sensor+'Slider').slider('value', value);
         $('#'+sensor+'SliderValue').text(value);
@@ -237,7 +238,7 @@ function HandleSecondarySwitch(sensor,state,sendmessage){
     if(on){
         $('#'+sensor+'Checkbox').bootstrapSwitch("state",!on);
         if(sendmessage)
-            Send(1,sensor,1,0,value);
+            Send(1,sensor,1,0,0,value);
     }
 
     //if state is off:
@@ -245,7 +246,7 @@ function HandleSecondarySwitch(sensor,state,sendmessage){
     if(!on){
         if(!$('#'+sensor+'Checkbox').get(0).checked) {
             if(sendmessage)
-                Send(1,sensor,1,0,value);
+                Send(1,sensor,1,0,0,value);
         }
     }
 }
@@ -254,7 +255,7 @@ function HandleSecondarySwitch(sensor,state,sendmessage){
 function HandleSliders(sensor,value,sendmessage){
     //Send the value over socket
     if(sendmessage)
-        Send(1,sensor,0,0,value);
+        Send(1,sensor,0,0,0,value);
 
     //Calculate toggle state based on slider value
     var state = (value>0) ? true : false;

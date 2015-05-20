@@ -19,6 +19,8 @@ var self;
 var Physikit = function(physikitKeys){
     this.fan = fanDevice;
     this.light = lightDevice;
+    this.move = moveDevice;
+    this.buzz = buzzDevice;
     this.keys = physikitKeys;
 
     self =  this;
@@ -27,12 +29,13 @@ var Physikit = function(physikitKeys){
 };
 
 //Generic device function
-function SetDevice(token, mode, setting, value ) {
+function SetDevice(token, mode, setting,args, value ) {
+    console.log("Set: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
     spark.getDevice(
         token,
         function (err, device) {
             //spark function run("a-b-c") a:mode, b:setting, c:value
-            device.callFunction('run', mode + '-' + setting+ '-' + value, function (err, data) {
+            device.callFunction('run', mode + '-' + setting+ '-'  +args + '-'+ value, function (err, data) {
                 if (err) {
                     console.log('An error occurred:', err);
                 }
@@ -41,13 +44,23 @@ function SetDevice(token, mode, setting, value ) {
 }
 
 //Control fan
-var fanDevice = function SetFanDevice(mode,setting,value){
-    SetDevice(self.keys.fanDeviceToken,mode,setting,value);
+var fanDevice = function SetFanDevice(mode,setting,args,value){
+    SetDevice(self.keys.fanDeviceToken,mode,setting,args,value);
 }
 
 //Control light
-var lightDevice = function SetLightDevice(mode,setting,value){
-    SetDevice(self.keys.lightDeviceToken,mode,setting,value);
+var lightDevice = function SetLightDevice(mode,setting,args,value){
+    SetDevice(self.keys.lightDeviceToken,mode,setting,args,value);
+}
+
+//Control buzz
+var buzzDevice = function SetBuzzDevice(mode,setting,args,value){
+    SetDevice(self.keys.buzzDeviceToken,mode,setting,args,value);
+}
+
+//Control move
+var moveDevice = function SetMoveDevice(mode,setting,args,value){
+    SetDevice(self.keys.moveDeviceToken,mode,setting,args,value);
 }
 
 //Set callbacks for each cube. Cubenames: light, buzz, move or fan
@@ -63,14 +76,18 @@ function SetCallback(deviceToken,cubeName){
 
 //Setup callback events
 var setupEvents = function SetupEvents(){
-
     SetCallback(self.keys.lightDeviceToken,"light");
     SetCallback(self.keys.fanDeviceToken,"fan");
+    SetCallback(self.keys.buzzDeviceToken,"buzz");
+    SetCallback(self.keys.moveDeviceToken,"move");
 }
 
 //When logged into spark setup our callback events
 spark.on('login', function() {
-    setupEvents();
+
+    //we don't user this right now since we are creating dynamic instances
+
+    //setupEvents();
 });
 
 //Export module

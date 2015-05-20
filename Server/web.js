@@ -14,7 +14,7 @@ var jwt = require('jsonwebtoken');
 //Physikit objects
 var Physikit = require('./Physikit')
 var Database = require('./Database');
-var SmartCitizenKit = require('./SmartCitizenKit');
+var SmartCitizenKitCollection = require('./SmartCitizenKitCollection');
 
 //Physikit classes
 var User = require('./User');
@@ -24,14 +24,18 @@ var Rule = require('./Rule');
 var Keys = require('./privateKeys');
 var keys = new Keys();
 
+//------------------------------------------------------------------------
 //User app as web sever that serves public folder
+//------------------------------------------------------------------------
 app.use(express.static(path.join(__dirname, './public')));
 
+//------------------------------------------------------------------------
 //Important rest call used for authentication.
+//------------------------------------------------------------------------
 app.get('/api/:id', function(req, res) {
 
     //Insignificant internal check if id is in database
-    CheckId(req.params.id, function (result) {
+    FindUser(req.params.id, function (result) {
         if (result == "") {
             res.send("405 access denied")
             return;
@@ -45,8 +49,10 @@ app.get('/api/:id', function(req, res) {
         res.json({token: token});
     });
 });
-
-function CheckId(id, callback){
+//------------------------------------------------------------------------
+//Check if requesting user exists in the DB
+//------------------------------------------------------------------------
+function FindUser(id, callback){
     if(id == undefined)
     {
         callback("");
@@ -60,25 +66,42 @@ function CheckId(id, callback){
     })
 }
 
+//------------------------------------------------------------------------
+//Security for websockets
+//------------------------------------------------------------------------
 io.use(socketioJwt.authorize({
     secret: keys.jwtKey,
     handshake: true
 }));
 
-
+//------------------------------------------------------------------------
+//When new client connectes to websockets
+//------------------------------------------------------------------------
 io.on('connection', function(socket){
 
     //Todo stuff on connected
-    socket.emit('sck',kit.lastpost);
 
-    socket.on('message', function(id,sensor,mode,setting,value){
-        physikit[sensor](mode,setting,value);
+    kit.kits.forEach(function(kit){
+        socket.emit('sck',kit.id,kit.lastpost);
+    });
 
+    socket.on('message', function(id,sensor,mode,setting,args,value){
+
+        FindUser(id,function(result){
+            if (result == "") {
+                console.log("405 access denied");
+                return;
+            }
+            var pk = new Physikit(result.physikit);
+            pk[sensor](mode,setting,args,value);
+            io.to('1').emit('spm',sensor, mode + "-" + setting + "-" +args+ "-" +value);
+
+        });
         //io.emit('message:', msg);
     });
 
     socket.on('id',function(id){
-        CheckId(id,function(result){
+        FindUser(id,function(result){
             if (result == "") {
                 console.log("405 access denied");
                 return;
@@ -88,21 +111,26 @@ io.on('connection', function(socket){
     });
 });
 
+//------------------------------------------------------------------------
+//The server runs on default Heroku port or 3000 for debug
+//------------------------------------------------------------------------
 httpApp.listen(process.env.PORT || 3000, function(){
     console.log('server running on *:3000');
 });
 
-var kit = new SmartCitizenKit(keys.smartCitizenKit1.token,keys.smartCitizenKit1.deviceId);
-kit.on('Received', function(data) {
-    io.emit('sck',data);
-    //RunRules();
+//------------------------------------------------------------------------
+// All the smart Citizen kits
+//------------------------------------------------------------------------
+var kit = new SmartCitizenKitCollection([keys.smartCitizenKit1]);
+
+kit.on('DataReceived', function(id,data) {
+    io.emit('sck',id,data);
+    console.log("Kit "+id + " -> "+ data.device.last_insert_datetime);
 });
 
-var physikit =  new Physikit(keys.physikit1);
-physikit.on('SparkMessage', function(source,data){
-    io.to('1').emit('spm',source,data);
-})
-
+//------------------------------------------------------------------------
+// Database connection
+//------------------------------------------------------------------------
 var db = new Database();
 db.on('inserted',function(collection,entity){
     if(collection == "rules")
@@ -111,39 +139,59 @@ db.on('inserted',function(collection,entity){
     }
 });
 
-//Todo
+//------------------------------------------------------------------------
+//This is called every time new data is received
+//from the smart citizen kit or when a new rule
+//is added by a user.
+//------------------------------------------------------------------------
 function RunRules(){
+    console.log("running rules");
+    //grab all the rules
     db.FindAll("rules", function (list) {
         list.forEach(function(rule) {
-            //console.log(
-            //    "Map the " + rule.smartSensor +
-            //    " from SmartCitizenKit nr." +  rule.smartId +
-            //    " to the " + rule.cube +
-            //        " cube when " + rule.condition +
-            //        " and run message: " +rule.outputMessage);
+            console.log(
+                "Map the " + rule.smartSensor +
+                " from SmartCitizenKit nr." +  rule.smartId +
+                " to the " + rule.cube +
+                    " cube when " + rule.condition +
+                    " and run message: " +rule.outputMessage);
         });
     });
 
 }
 
+//------------------------------------------------------------------------
 //Debug rest calls that need to be remove when deployed, these
 //are NOT secure and violate REST, but can be used to test
 //functions from the browser!!
-app.get('/api/:id/kit/:sensor/:mode/:setting/:value', function(req, res){
-    spark[req.params.sensor](req.params.mode, req.params.setting, req.params.value);
-    res.send(
-        {
-            reponse: "200 OK",
-            sensor: req.params.sensor,
-            mode: req.params.mode,
-            setting: req.params.setting,
-            value: req.params.value
-        })
+//------------------------------------------------------------------------
 
+//------------------------------------------------------------------------
+// http://localhost/api/1/kit/light/0/0/0/255
+//------------------------------------------------------------------------
+app.get('/api/:id/kit/:sensor/:mode/:setting/:args/:value', function(req, res){
+
+    FindUser(req.params.id, function(result){
+        if(result =="")
+        {
+            res.send("405 access denied")
+            return;
+        }
+
+        var pk = new Physikit(result.physikit);
+        pk[req.params.sensor](req.params.mode,req.params.setting,req.params.args,req.params.value);
+        io.to('1').emit('spm',req.params.sensor, req.params.mode + "-" + req.params.setting +
+            "-" +req.params.args + "-" + req.params.value);
+
+        res.send("200, OK")
+    });
 });
 
+//------------------------------------------------------------------------
+// http://localhost/api/3/rules
+//------------------------------------------------------------------------
 app.get('/api/:id/rules',function(req,res){
-    CheckId(req.params.id, function(result){
+    FindUser(req.params.id, function(result){
         if(result =="")
         {
             res.send("405 access denied")
@@ -157,10 +205,12 @@ app.get('/api/:id/rules',function(req,res){
     });
 });
 
-
+//------------------------------------------------------------------------
+// http://localhost/api/3/rules/co2/1/light/>10/0-0-0-255
+//------------------------------------------------------------------------
 app.get('/api/:id/rules/:smartSensor/:smartId/:sensor/:condition/:output',function(req,res){
 
-    CheckId(req.params.id, function(result) {
+    FindUser(req.params.id, function(result) {
         if (result == "") {
             res.send("405 access denied")
             return;
@@ -180,6 +230,9 @@ app.get('/api/:id/rules/:smartSensor/:smartId/:sensor/:condition/:output',functi
     });
 });
 
+//------------------------------------------------------------------------
+// http://localhost/api/users/666/newUser
+//------------------------------------------------------------------------
 app.get('/api/users/:newId/:name',function(req, res){
 
     var usr = new User("user", req.params.newId);
@@ -188,8 +241,11 @@ app.get('/api/users/:newId/:name',function(req, res){
     res.send(usr);
 });
 
+//------------------------------------------------------------------------
+// http://localhost/api/1/rules
+//------------------------------------------------------------------------
 app.get('/api/:id/rules/',function(req, res){
-    CheckId(req.params.id, function(result) {
+    FindUser(req.params.id, function(result) {
         if (result == "") {
             res.send("405 access denied")
             return;
@@ -200,8 +256,11 @@ app.get('/api/:id/rules/',function(req, res){
     });
 });
 
+//------------------------------------------------------------------------
+// http://localhost/api/1/users
+//------------------------------------------------------------------------
 app.get('/api/:id/users/',function(req, res){
-    CheckId(req.params.id, function(result) {
+    FindUser(req.params.id, function(result) {
         if (result == "") {
             res.send("405 access denied")
             return;

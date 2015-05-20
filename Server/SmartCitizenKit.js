@@ -15,11 +15,13 @@ var util = require('util');
 var self;
 
 //The SmartCitizenKit object
-var SmartCitizenKit =  function(token, deviceId){
+var SmartCitizenKit =  function(id, token, deviceId){
     this.lastpost = undefined;
+    this.id = id;
     this.interval = 2000;
     this.token = token;
     this.deviceId = deviceId;
+
     self =  this;
 
     //Uses interval to poll the API
@@ -45,9 +47,7 @@ var SmartCitizenKit =  function(token, deviceId){
                 if(self.lastpost == undefined)
                 {
                     //send an event to report new data
-                    self.emit("Received", data);
-
-                    console.log("Smart Citizen Kit Updated " + data.device.last_insert_datetime );
+                    self.emit("DataReceived", self.id, data);
 
                     //cache data
                     self.lastpost = data;
@@ -56,9 +56,7 @@ var SmartCitizenKit =  function(token, deviceId){
                 if(self.lastpost.device.last_insert_datetime != data.device.last_insert_datetime){
 
                     //send an event to report new data
-                    self.emit("Received", data);
-
-                    console.log("Smart Citizen Kit Updated " + data.device.last_insert_datetime );
+                    self.emit("DataReceived", self.id, data);
 
                     //cache data
                     self.lastpost = data;
