@@ -8,9 +8,9 @@
 var socket;
 
 //develop url. Change for deployment.
-//var url= "https://physikit.herokuapp.com/api/";
+var url= "https://physikit.herokuapp.com/api/";
 
-var url = "http://localhost:3000/api/";
+//var url = "http://localhost:3000/api/";
 
 //login the user with id (id: 1-5 depending on famility/kit; can be changed to more complex
 //password and username)
@@ -27,39 +27,43 @@ function Login(url,id){
         if(secret =="405 access denied")
         {
             //We can do UI stuff to show bad login
-            console.slog(ecret);
+            console.log(secret);
             return;
         }
 
         //Connect to the socket with out secret
-        connect_socket(secret);
+        connect_socket(id,secret);
 
         //Set a cookie with our id, NOT the secret
         $.cookie("physikit",id);
 
         //Uodate UI
         SwitchLogin(false,id);
+
+        console.log("logged in");
     });
 }
 
 //Connect the socket with secret
-function connect_socket (token) {
+function connect_socket (id,token) {
     console.log("Log in response: " + token.token);
 
     //Connect to server with secret
     socket = io.connect('', {
-        'query': 'token=' + token.token
+        'query':
+        'token=' + token.token +
+        "&id=" +id
     });
 
     //Handles "sck" messages related to smart citizen api
     //updates send by our app over socket.io
-    socket.on('sck', function(id,data){
+    socket.on('smartcitizen', function(id,data){
         HandleSmartCitizenMessage(id,data);
     });
 
     //Handles "spm" messages related to physikit api
     //updates send by our app over socket.io
-    socket.on('spm',function(source,msg){
+    socket.on('physikit',function(source,msg){
         HandlePhysikitMessage(source,msg);
     });
 
@@ -72,7 +76,7 @@ function connect_socket (token) {
     //Handles "onconnect" socket.io event
     socket.on("connect",function(msg){
         //send an it so server know which kit we need
-        socket.emit('id', $.cookie("physikit"));
+        //socket.emit('id', $.cookie("physikit"));
     });
 
     //Problem with token
@@ -90,8 +94,8 @@ function connect_socket (token) {
 //mode: 0-9
 //setting: 0-9
 //value: 0-9
-function Send(id,sensor,mode,setting,args,value){
-    socket.emit('message',id,sensor,mode,setting,args,value);
+function Send(sensor,mode,setting,args,value){
+    socket.emit('message',$.cookie("physikit"),sensor,mode,setting,args,value);
 };
 
 
@@ -104,6 +108,7 @@ function HandleLogOut(){
     $.removeCookie("physikit");
     SwitchLogin(true);
     socket.disconnect();
+    location.reload();
 }
 
 //Update UI
@@ -141,6 +146,8 @@ $(document).ready(function() {
     //Initialize slider + switch events
     HandleSwitchEvent("light",true);
     HandleSwitchEvent("fan",true);
+    HandleSwitchEvent("buzz",true);
+    HandleSwitchEvent("move",true);
 });
 
 //Handles Smart Citizen message and updates UI
@@ -206,7 +213,7 @@ function HandleMainSwitch(sensor,state,sendmessage){
     // - turn off the alert switch if needed
     if(on){
         if(sendmessage)
-            Send(1,sensor,0,0,0,value);
+            Send(sensor,0,0,0,value);
         $('#'+sensor+'Slider').slider('value', value);
         $('#'+sensor+'SliderValue').text(value);
         if($('#'+sensor+'AlertCheckbox').get(0).checked)
@@ -219,7 +226,7 @@ function HandleMainSwitch(sensor,state,sendmessage){
     if(!on){
         if(!$('#'+sensor+'AlertCheckbox').get(0).checked) {
             if(sendmessage)
-                Send(1,sensor,0,0,0,value);
+                Send(sensor,0,0,0,value);
         }
         $('#'+sensor+'Slider').slider('value', value);
         $('#'+sensor+'SliderValue').text(value);
@@ -238,7 +245,7 @@ function HandleSecondarySwitch(sensor,state,sendmessage){
     if(on){
         $('#'+sensor+'Checkbox').bootstrapSwitch("state",!on);
         if(sendmessage)
-            Send(1,sensor,1,0,0,value);
+            Send(sensor,1,0,0,value);
     }
 
     //if state is off:
@@ -246,7 +253,7 @@ function HandleSecondarySwitch(sensor,state,sendmessage){
     if(!on){
         if(!$('#'+sensor+'Checkbox').get(0).checked) {
             if(sendmessage)
-                Send(1,sensor,1,0,0,value);
+                Send(sensor,1,0,0,value);
         }
     }
 }
@@ -255,7 +262,7 @@ function HandleSecondarySwitch(sensor,state,sendmessage){
 function HandleSliders(sensor,value,sendmessage){
     //Send the value over socket
     if(sendmessage)
-        Send(1,sensor,0,0,0,value);
+        Send(sensor,0,0,0,value);
 
     //Calculate toggle state based on slider value
     var state = (value>0) ? true : false;

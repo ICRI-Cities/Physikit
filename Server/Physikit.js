@@ -16,8 +16,9 @@ var util = require('util');
 var self;
 
 //The main object
-var Physikit = function(physikitKeys){
+var Physikit = function(id,physikitKeys){
     this.fan = fanDevice;
+    this.id = id;
     this.light = lightDevice;
     this.move = moveDevice;
     this.buzz = buzzDevice;
@@ -30,7 +31,6 @@ var Physikit = function(physikitKeys){
 
 //Generic device function
 function SetDevice(token, mode, setting,args, value ) {
-    console.log("Set: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
     spark.getDevice(
         token,
         function (err, device) {
@@ -46,21 +46,25 @@ function SetDevice(token, mode, setting,args, value ) {
 //Control fan
 var fanDevice = function SetFanDevice(mode,setting,args,value){
     SetDevice(self.keys.fanDeviceToken,mode,setting,args,value);
+    console.log("Kit " + self.id+" -> Set fan: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
 }
 
 //Control light
 var lightDevice = function SetLightDevice(mode,setting,args,value){
     SetDevice(self.keys.lightDeviceToken,mode,setting,args,value);
+    console.log("Kit " + self.id+" -> Set light: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
 }
 
 //Control buzz
 var buzzDevice = function SetBuzzDevice(mode,setting,args,value){
     SetDevice(self.keys.buzzDeviceToken,mode,setting,args,value);
+    console.log("Kit " + self.id+" -> Set buzz: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
 }
 
 //Control move
 var moveDevice = function SetMoveDevice(mode,setting,args,value){
     SetDevice(self.keys.moveDeviceToken,mode,setting,args,value);
+    console.log("Kit " + self.id+" -> Set move: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
 }
 
 //Set callbacks for each cube. Cubenames: light, buzz, move or fan

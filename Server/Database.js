@@ -24,6 +24,7 @@ var Database = function(){
     this.Add = add;
     this.FindAll = findAll;
     this.FindById = findAllbyId;
+    this.Replace= replace;
     self =  this;
 };
 
@@ -31,10 +32,22 @@ var Database = function(){
 var insertDocument = function(db,collection, entity, callback) {
     db.collection(collection).insertOne( entity, function(err, result) {
         assert.equal(err, null);
-        console.log("Inserted " + entity +" into " + collection);
+        console.log("Inserted " + JSON.stringify(entity) +" into " + collection);
         self.emit("inserted",collection, entity);
         callback(result);
     });
+};
+
+var updateDocument  = function(db,collection,newEntity,fieldName,id, callback){
+
+    var query = {};
+    query[fieldName] = id;
+
+    db.collection(collection).replaceOne(query,entity,
+        function(err, results) {
+            console.log("Replace and put " + JSON.stringify(entity) +" into " + collection);
+            callback();
+        });
 };
 
 //Find function
@@ -52,8 +65,13 @@ var findDocuments = function(db,collection,callback){
 }
 
 //Find by id function
-var findDocumentsWithId = function(db,collection,id,callback){
-    var cursor = db.collection(collection).find( { "id": id });
+var findDocumentsWithId = function(db,collection,fieldName, id,callback){
+
+    var query = {};
+    query[fieldName] = id;
+
+    var cursor = db.collection(collection).find(query);
+    console.log(fieldName + " - "+ id);
     var list = [];
     cursor.each(function(err, doc) {
         assert.equal(err, null);
@@ -65,6 +83,15 @@ var findDocumentsWithId = function(db,collection,id,callback){
     });
 }
 
+var replace = function(collection,entity,fieldName,id, callback){
+    mongoClient.connect(keys.databaseUrl, function(err, db) {
+        assert.equal(null, err);
+        updateDocument(db, collection,fieldName,id,entity, function(err,result) {
+            db.close();
+            callback(result);
+        });
+    });
+}
 //Add object to collection
 var add = function(collection,entity){
     mongoClient.connect(keys.databaseUrl, function(err, db) {
@@ -76,10 +103,10 @@ var add = function(collection,entity){
 }
 
 //Find all in collection with id
-var findAllbyId = function(collection,id,callback) {
+var findAllbyId = function(collection,fieldName, id, callback) {
     mongoClient.connect(keys.databaseUrl, function(err, db) {
         assert.equal(null, err);
-        findDocumentsWithId(db,collection,id,function(list) {
+        findDocumentsWithId(db,collection,fieldName,id,function(list) {
             db.close();
             callback(list);
         });

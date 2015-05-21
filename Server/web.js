@@ -24,6 +24,7 @@ var Rule = require('./Rule');
 var Keys = require('./privateKeys');
 var keys = new Keys();
 
+
 //------------------------------------------------------------------------
 //User app as web sever that serves public folder
 //------------------------------------------------------------------------
@@ -52,18 +53,26 @@ app.get('/api/:id', function(req, res) {
 //------------------------------------------------------------------------
 //Check if requesting user exists in the DB
 //------------------------------------------------------------------------
-function FindUser(id, callback){
+function Find(type,fieldName,id, callback){
     if(id == undefined)
     {
         callback("");
         return;
     }
 
-    db.FindById("users",id.toString(),function(list){
+    db.FindById(type,fieldName.toString(),id.toString(),function(list){
         if(list[0] != null)
             callback(list[0]);
         else callback("");
     })
+}
+
+
+function FindRule(id,callback){
+    Find("rules","cube",id,callback);
+}
+function FindUser(id,callback){
+    Find("users","id",id,callback);
 }
 
 //------------------------------------------------------------------------
@@ -80,10 +89,20 @@ io.use(socketioJwt.authorize({
 io.on('connection', function(socket){
 
     //Todo stuff on connected
+    FindUser(socket.client.request._query.id, function (result) {
+        if (result == "") {
+            return;
+        }
 
-    kit.kits.forEach(function(kit){
-        socket.emit('sck',kit.id,kit.lastpost);
+        console.log('Client connect with id: ', socket.client.request._query.id);
+        socket.join(socket.client.request._query.id);
+
+        kit.kits.forEach(function(kit){
+            socket.emit('smartcitizen',kit.id,kit.lastpost);
+        });
+
     });
+
 
     socket.on('message', function(id,sensor,mode,setting,args,value){
 
@@ -92,9 +111,12 @@ io.on('connection', function(socket){
                 console.log("405 access denied");
                 return;
             }
-            var pk = new Physikit(result.physikit);
+            var pk = new Physikit(id,result.physikit);
             pk[sensor](mode,setting,args,value);
-            io.to('1').emit('spm',sensor, mode + "-" + setting + "-" +args+ "-" +value);
+
+            console.log(id);
+
+            io.to(id).emit('physikit',sensor, mode + "-" + setting + "-" +args+ "-" +value);
 
         });
         //io.emit('message:', msg);
@@ -124,7 +146,7 @@ httpApp.listen(process.env.PORT || 3000, function(){
 var kit = new SmartCitizenKitCollection([keys.smartCitizenKit1]);
 
 kit.on('DataReceived', function(id,data) {
-    io.emit('sck',id,data);
+    io.emit('smartcitizen',id,data);
     console.log("Kit "+id + " -> "+ data.device.last_insert_datetime);
 });
 
@@ -180,7 +202,7 @@ app.get('/api/:id/kit/:sensor/:mode/:setting/:args/:value', function(req, res){
 
         var pk = new Physikit(result.physikit);
         pk[req.params.sensor](req.params.mode,req.params.setting,req.params.args,req.params.value);
-        io.to('1').emit('spm',req.params.sensor, req.params.mode + "-" + req.params.setting +
+        io.to(req.params.id).emit('physikit',req.params.sensor, req.params.mode + "-" + req.params.setting +
             "-" +req.params.args + "-" + req.params.value);
 
         res.send("200, OK")
@@ -198,7 +220,7 @@ app.get('/api/:id/rules',function(req,res){
             return;
         }
 
-        db.FindById("rules",result.id,function(list)
+        db.FindById("rules","id",result.id,function(list)
         {
             res.send(list);
         });
@@ -215,18 +237,24 @@ app.get('/api/:id/rules/:smartSensor/:smartId/:sensor/:condition/:output',functi
             res.send("405 access denied")
             return;
         }
-        var rule = new Rule(
-            "rule",
-            result.id,
-            req.params.smartId,
-            req.params.smartSensor,
-            req.params.sensor,
-            req.params.condition,
-            req.params.output);
 
-        db.Add("rules",rule);
-        io.emit('rules',rule);
-        res.send(rule);
+        FindRule(req.params.sensor,function(result){
+
+            var rule = new Rule(
+                "rule",
+                result.id,
+                req.params.smartId,
+                req.params.smartSensor,
+                req.params.sensor,
+                req.params.condition,
+                req.params.output);
+
+                db.Add("rules",rule);
+
+            io.to(result.id).emit('rules',rule);
+            res.send(rule);
+        });
+
     });
 });
 
@@ -250,7 +278,7 @@ app.get('/api/:id/rules/',function(req, res){
             res.send("405 access denied")
             return;
         }
-        db.FindById("rules", result.id, function (list) {
+        db.FindById("rules","id", result.id, function (list) {
             res.send(list);
         });
     });
