@@ -9,6 +9,7 @@ var Keys = function(){
         deviceId: 2165,
         id:1
     };
+    this.debug = false,
     this.databaseUrl ='mongodb://physikit:physikit@ds031942.mongolab.com:31942/physikit';
     this.jwtKey = 'fdsldsoiewuroiewuriqwjdshfksh'
 }

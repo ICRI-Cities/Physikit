@@ -3,6 +3,7 @@ var express= require('express');
 var path= require('path');
 var app = express();
 var httpApp = require('http').Server(app);
+var bodyParser= require('body-parser');
 
 var http = require('http');
 var io = require('socket.io')(httpApp);
@@ -24,19 +25,19 @@ var Rule = require('./Rule');
 var Keys = require('./privateKeys');
 var keys = new Keys();
 
-
 //------------------------------------------------------------------------
 //User app as web sever that serves public folder
 //------------------------------------------------------------------------
 app.use(express.static(path.join(__dirname, './public')));
+app.use(bodyParser.json());
 
 //------------------------------------------------------------------------
 //Important rest call used for authentication.
 //------------------------------------------------------------------------
-app.get('/api/:id', function(req, res) {
+app.post('/api',function(req,res){
 
-    //Insignificant internal check if id is in database
-    FindUser(req.params.id, function (result) {
+    //Internal check if user is in database
+    FindUser(req.body.id, function (result) {
         if (result == "") {
             res.send("405 access denied")
             return;
@@ -44,35 +45,97 @@ app.get('/api/:id', function(req, res) {
 
         //important here, the client is given a unique
         //id for identification
-        var token = jwt.sign(req.params.id, keys.jwtKey);
+        var token = jwt.sign(req.body.id, keys.jwtKey);
 
         //send the generated user specific token as json
         res.json({token: token});
     });
 });
+
 //------------------------------------------------------------------------
-//Check if requesting user exists in the DB
+// All the smart Citizen kits
+//------------------------------------------------------------------------
+var kit = new SmartCitizenKitCollection([keys.smartCitizenKit1]);
+
+//When new data is received
+kit.on('DataReceived', function(id,data) {
+
+    //Send the data to all clients
+    io.emit('smartcitizen',id,data);
+
+    //Since we have new data, we need to run all rules
+    RunRules();
+
+    if(keys.debug) console.log("Smart Citizen Kit "+id + " received data on "+ data.device.last_insert_datetime);
+});
+
+//------------------------------------------------------------------------
+// Database connection
+//------------------------------------------------------------------------
+var db = new Database();
+
+//------------------------------------------------------------------------
+//This is called every time new data is received
+//from the smart citizen kit or when a new rule
+//is added by a user.
+//------------------------------------------------------------------------
+function RunRules(){
+
+    if(keys.debug) console.log("running rules");
+
+    //Grab all the rules from the DB
+    db.FindAll("rules", function (list) {
+        list.forEach(function(rule) {
+
+            //Run rule
+            RunRule(rule);
+        });
+    });
+}
+
+//------------------------------------------------------------------------
+//Called when one of the clients add a new rule
+//------------------------------------------------------------------------
+function RunRule(rule){
+
+    //Update the Physikit with the new rule
+    UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,rule.value);
+
+    //Send update event
+    io.to(rule.id).emit('rule',rule);
+
+    if(keys.debug) console.log("Run rule for " + rule.cube + " on kit "+ rule.id);
+}
+
+
+//------------------------------------------------------------------------
+//Check if requesting entity exists in the DB
 //------------------------------------------------------------------------
 function Find(type,fieldName,id, callback){
+
+    //If bad id, callback nothing
     if(id == undefined)
     {
-        callback("");
+        if(callback != undefined) callback("");
         return;
     }
 
+    //Ask the db, make sure to stringify the input
     db.FindById(type,fieldName.toString(),id.toString(),function(list){
-        if(list[0] != null)
-            callback(list[0]);
-        else callback("");
+
+        //if list[0] == null, the array is empty and nothing was found
+        //callback nothing or list
+        if(list[0] != null && callback != undefined) callback(list[0]);
+        else if(callback != undefined)  callback("");
     })
 }
 
-
+//Helper functions for rules and users
 function FindRule(id,callback){
-    Find("rules","cube",id,callback);
+    Find("rules","cube",id,callback);   //"rules" collection in database, and search for "cube" field
 }
 function FindUser(id,callback){
-    Find("users","id",id,callback);
+    Find("users","id",id,callback);     //"users" collection in database, and search for "id" field
 }
 
 //------------------------------------------------------------------------
@@ -88,125 +151,163 @@ io.use(socketioJwt.authorize({
 //------------------------------------------------------------------------
 io.on('connection', function(socket){
 
-    //Todo stuff on connected
+    //On new websocket connect, we need to check if user exists in db
     FindUser(socket.client.request._query.id, function (result) {
+
+        //No user
         if (result == "") {
             return;
         }
 
-        console.log('Client connect with id: ', socket.client.request._query.id);
+        //User found
+        if(keys.debug)  console.log('Client connect with id: ', socket.client.request._query.id);
+
+        //Put socket into a separate channel for that id, so we don't do cross-talk across
+        //several groups of clients
         socket.join(socket.client.request._query.id);
 
+        //Grab all the smart citizen kits
         kit.kits.forEach(function(kit){
+
+            //Send smart citizen data to all clients, independent on their id
+            //and thus joined channel.
             socket.emit('smartcitizen',kit.id,kit.lastpost);
         });
 
+        //Since we have a new connection, let's run the rules
+        //to make sure we're updated
+        RunRules();
+
     });
 
+    //New rule message received from client
+    socket.on('rule',function(data){
 
-    socket.on('message', function(id,sensor,mode,setting,args,value){
-
-        FindUser(id,function(result){
-            if (result == "") {
-                console.log("405 access denied");
-                return;
-            }
-            var pk = new Physikit(id,result.physikit);
-            pk[sensor](mode,setting,args,value);
-
-            console.log(id);
-
-            io.to(id).emit('physikit',sensor, mode + "-" + setting + "-" +args+ "-" +value);
-
-        });
-        //io.emit('message:', msg);
+        //Add a new rule that we received
+        AddRule(data,function(result){});
     });
 
-    socket.on('id',function(id){
-        FindUser(id,function(result){
-            if (result == "") {
-                console.log("405 access denied");
-                return;
-            }
-            socket.join(id);
-        });
+    //A client disconnected
+    socket.on('disconnect', function() {
+
+        // We don't really need to do anything here
+        if(keys.debug)  console.log('Client disconnect with id: ', socket.client.request._query.id);
+    });
+
+    //The client send a message for the Physikit
+    //WARNING: keys.debug method, do not use, will disrupt the rule system!!!
+    socket.on('message', function(id,cube,mode,setting,args,value){
+
+        //Update Physikit
+        UpdatePhysikit(id,cube,mode,setting,args,value);
     });
 });
 
 //------------------------------------------------------------------------
-//The server runs on default Heroku port or 3000 for debug
+//Update the physikit with a new message
 //------------------------------------------------------------------------
-httpApp.listen(process.env.PORT || 3000, function(){
-    console.log('server running on *:3000');
-});
+function UpdatePhysikit(id,cube,mode,setting,args,value){
 
-//------------------------------------------------------------------------
-// All the smart Citizen kits
-//------------------------------------------------------------------------
-var kit = new SmartCitizenKitCollection([keys.smartCitizenKit1]);
+    //See if user existing in db
+    FindUser(id,function(result){
 
-kit.on('DataReceived', function(id,data) {
-    io.emit('smartcitizen',id,data);
-    console.log("Kit "+id + " -> "+ data.device.last_insert_datetime);
-});
+        //No user found, stop function
+        if (result == "") {
+            if(keys.debug) console.log("405 access denied");
+            return;
+        }
 
-//------------------------------------------------------------------------
-// Database connection
-//------------------------------------------------------------------------
-var db = new Database();
-db.on('inserted',function(collection,entity){
-    if(collection == "rules")
-    {
-        //do stuff with rules
-    }
-});
+        //Create new physikit instance based on id
+        var pk = new Physikit(id,result.physikit);
 
-//------------------------------------------------------------------------
-//This is called every time new data is received
-//from the smart citizen kit or when a new rule
-//is added by a user.
-//------------------------------------------------------------------------
-function RunRules(){
-    console.log("running rules");
-    //grab all the rules
-    db.FindAll("rules", function (list) {
-        list.forEach(function(rule) {
-            console.log(
-                "Map the " + rule.smartSensor +
-                " from SmartCitizenKit nr." +  rule.smartId +
-                " to the " + rule.cube +
-                    " cube when " + rule.condition +
-                    " and run message: " +rule.outputMessage);
-        });
+        //Update the right cube
+        pk[cube](mode,setting,args,value);
     });
-
 }
 
 //------------------------------------------------------------------------
-//Debug rest calls that need to be remove when deployed, these
-//are NOT secure and violate REST, but can be used to test
-//functions from the browser!!
+//Add a new rule to the system
 //------------------------------------------------------------------------
+function AddRule(rule,callback){
 
-//------------------------------------------------------------------------
-// http://localhost/api/1/kit/light/0/0/0/255
-//------------------------------------------------------------------------
-app.get('/api/:id/kit/:sensor/:mode/:setting/:args/:value', function(req, res){
-
-    FindUser(req.params.id, function(result){
-        if(result =="")
-        {
+    //Check if user exists
+    FindUser(rule.id, function(result) {
+        if (result == "") {
             res.send("405 access denied")
             return;
         }
 
-        var pk = new Physikit(result.physikit);
-        pk[req.params.sensor](req.params.mode,req.params.setting,req.params.args,req.params.value);
-        io.to(req.params.id).emit('physikit',req.params.sensor, req.params.mode + "-" + req.params.setting +
-            "-" +req.params.args + "-" + req.params.value);
+        //Check if rule exists for this cube
+        FindRule(rule.cube,function(result){
 
-        res.send("200, OK")
+            //These are our defaults
+            var cubes = ["light", "fan", "move","buzz"];
+            var sensors = ["temp", "hum", "co","no2","light","noise","bat","panel","nets"];
+
+            //Check if requested cube exist
+            if(cubes.indexOf(rule.cube) > -1){
+
+                //Check if request sensor exists
+                if(sensors.indexOf(rule.smartSensor) >-1){
+
+                    //Add new rule or replace if exist
+                    if(result == "") db.Add("rules",rule);
+
+                    else db.Replace("rules",rule,"cube",rule.cube);
+
+                    //Run the new rule
+                    RunRule(rule);
+
+                    //Callback
+                    var data = {};
+                    data.code = 200;
+                    data.result = 'rule added';
+                    data.rule = rule;
+                    if(callback != undefined) callback(data);
+                }
+                //Error -> sensor type does not exist
+                else{
+                    var data = {};
+                    data.code = 400;
+                    data.error = 'requested sensor type ' + rule.smartSensor + ' not found';
+                    data.rule = rule;
+                    if(callback != undefined) callback(data);
+                }
+
+            }
+            //Error -> cube type does not exist
+            else{
+                var data = {};
+                data.code = 400;
+                data.error = 'requested cube type ' + rule.cube + ' not found';
+                data.rule = rule;
+                if(callback != undefined) callback(data);
+            }
+        });
     });
+}
+
+//------------------------------------------------------------------------
+//The server runs on default Heroku port or 3000 for keys.debug
+//------------------------------------------------------------------------
+httpApp.listen(process.env.PORT || 3000, function(){
+    if(keys.debug) console.log('server running on *:3000');
+});
+
+
+//-------------------------------------------------------------------------------------------------------------------
+//debug rest calls that need to be remove when deployed, these
+//are NOT secure and violate REST, but can be used to test
+//functions from the browser!!
+//------------------------------------------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------
+// http://localhost/api/1/kit/light/0/0/0/255
+//------------------------------------------------------------------------
+app.get('/api/:id/kit/:cube/:mode/:setting/:args/:value', function(req, res){
+    UpdatePhysikit(req.params.id,req.params.cube,
+        req.params.mode,req.params.setting,req.params.args,req.params.value);
+    res.send("200, OK")
 });
 
 //------------------------------------------------------------------------
@@ -227,35 +328,27 @@ app.get('/api/:id/rules',function(req,res){
     });
 });
 
+
 //------------------------------------------------------------------------
 // http://localhost/api/3/rules/co2/1/light/>10/0-0-0-255
 //------------------------------------------------------------------------
-app.get('/api/:id/rules/:smartSensor/:smartId/:sensor/:condition/:output',function(req,res){
+app.get('/api/:id/rules/:smartSensor/:smartId/:cube/:condition/:mode/:setting/:args/:value',function(req,res){
 
-    FindUser(req.params.id, function(result) {
-        if (result == "") {
-            res.send("405 access denied")
-            return;
-        }
+    var rule = new Rule(
+        "rule",
+        req.params.id,
+        req.params.smartId,
+        req.params.smartSensor,
+        req.params.cube,
+        req.params.condition,
+        req.params.mode,
+        req.params.setting,
+        req.params.args,
+        req.params.value);
 
-        FindRule(req.params.sensor,function(result){
-
-            var rule = new Rule(
-                "rule",
-                result.id,
-                req.params.smartId,
-                req.params.smartSensor,
-                req.params.sensor,
-                req.params.condition,
-                req.params.output);
-
-                db.Add("rules",rule);
-
-            io.to(result.id).emit('rules',rule);
-            res.send(rule);
+        AddRule(rule, function(result){
+            res.json(result)
         });
-
-    });
 });
 
 //------------------------------------------------------------------------

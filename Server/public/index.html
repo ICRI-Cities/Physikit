@@ -41,11 +41,12 @@
           <a class="navbar-brand" href="#">Physikit V.0.1</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
-          <form onsubmit="HandleLogIn()" class="navbar-form navbar-right" role="form">
+          <form action="#" onsubmit="HandleLogIn();" class="navbar-form navbar-right" role="form" id="logForm">
             <div class="form-group" id="loginForm">
               <input id="logIn" type="text" placeholder="id" class="form-control"/>
-              <button onclick="HandleLogIn()"  class="btn" type="button">Log In</button>
+              <button onclick="HandleLogIn();" class="btn" type="button">Log In</button>
             </div>
+          </form>
           <div class="form-group" id="loggedInForm">
               <ul class="nav navbar-nav navbar-right">
                   <li class="dropdown">
@@ -58,7 +59,6 @@
                   </li>
               </ul>
           </div>
-          </form>
         </div><!--/.navbar-collapse -->
       </div>
     </nav>

@@ -34,19 +34,20 @@ var insertDocument = function(db,collection, entity, callback) {
         assert.equal(err, null);
         console.log("Inserted " + JSON.stringify(entity) +" into " + collection);
         self.emit("inserted",collection, entity);
-        callback(result);
+        if(callback != undefined) callback(result);
     });
 };
 
 var updateDocument  = function(db,collection,newEntity,fieldName,id, callback){
-
     var query = {};
     query[fieldName] = id;
 
-    db.collection(collection).replaceOne(query,entity,
+    db.collection(collection).replaceOne(query,newEntity,
         function(err, results) {
-            console.log("Replace and put " + JSON.stringify(entity) +" into " + collection);
-            callback();
+            if(err)
+                console.log(err);
+            console.log("Replace and put " + JSON.stringify(newEntity) +" into " + collection);
+            if(callback != undefined) callback();
         });
 };
 
@@ -59,7 +60,7 @@ var findDocuments = function(db,collection,callback){
         if (doc != null) {
             list.push(doc);
         } else {
-            callback(list);
+            if(callback != undefined) callback(list);
         }
     });
 }
@@ -71,24 +72,22 @@ var findDocumentsWithId = function(db,collection,fieldName, id,callback){
     query[fieldName] = id;
 
     var cursor = db.collection(collection).find(query);
-    console.log(fieldName + " - "+ id);
     var list = [];
     cursor.each(function(err, doc) {
         assert.equal(err, null);
         if (doc != null) {
             list.push(doc);
         } else {
-            callback(list);
+            if(callback != undefined) callback(list);
         }
     });
 }
 
-var replace = function(collection,entity,fieldName,id, callback){
+var replace = function(collection,entity,fieldName,id){
     mongoClient.connect(keys.databaseUrl, function(err, db) {
         assert.equal(null, err);
-        updateDocument(db, collection,fieldName,id,entity, function(err,result) {
+        updateDocument(db, collection,entity,fieldName,id, function() {
             db.close();
-            callback(result);
         });
     });
 }
@@ -108,7 +107,7 @@ var findAllbyId = function(collection,fieldName, id, callback) {
         assert.equal(null, err);
         findDocumentsWithId(db,collection,fieldName,id,function(list) {
             db.close();
-            callback(list);
+            if(callback != undefined) callback(list);
         });
     });
 };
@@ -119,7 +118,7 @@ var findAll = function(collection,callback) {
         assert.equal(null, err);
         findDocuments(db,collection,function(list) {
             db.close();
-            callback(list);
+            if(callback != undefined) callback(list);
         });
     });
 };
