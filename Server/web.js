@@ -29,6 +29,7 @@ var keys = new Keys();
 //User app as web sever that serves public folder
 //------------------------------------------------------------------------
 app.use(express.static(path.join(__dirname, './public')));
+app.use("/helper", express.static(__dirname + "/helper"));
 app.use(bodyParser.json());
 
 //------------------------------------------------------------------------
@@ -130,7 +131,7 @@ function Find(type,fieldName,id, callback){
     })
 }
 
-//Helper functions for rules and users
+//helper functions for rules and users
 function FindRule(id,callback){
     Find("rules","cube",id,callback);   //"rules" collection in database, and search for "cube" field
 }
