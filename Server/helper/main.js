@@ -1,5 +1,3 @@
-
-
 //Document is fully loaded
 $(document).ready(function() {
 
@@ -44,6 +42,7 @@ function Value(propertyName,value){
 
 //Check if we logged in already
 var loggedIn = false;
+var cookieChecked =false;
 
 //Handles form submit
 function SendMessage(){
@@ -62,14 +61,14 @@ function SendMessage(){
     var vvalue = parseInt(message.value);
 
     if(isNaN(vvalue) || vvalue<0 || vvalue >255){
-        Error(" Value '" + message.value + " ' is not a valid argument. Please choose a value between 0 and 255.",4000);
+        SetError(" Value '" + message.value + " ' is not a valid argument. Please choose a value between 0 and 255.",4000);
         return;
     }
 
     //Save the cookie if needed
     if($("#saveCookie").is(':checked')){
         $.cookie("data",JSON.stringify(message));
-        Info("We saved your input data to a cookie",4000);
+        SetInfo("We saved your input data to a cookie",4000);
     }
 
     //When spark is logged in
@@ -77,7 +76,7 @@ function SendMessage(){
 
         if(err){
             console.log("Spark login error: "+err);
-            Error("Please provide a valid API token. You can find this token in the settings tab of" +
+            SetError("Please provide a valid API token. You can find this token in the settings tab of" +
                 " the online <a href='https://build.particle.io/build#settings' target='_blank'>build.particle.io</a>" +
                 " editor.",10000);
             return;
@@ -102,11 +101,11 @@ function SendSparkMessage(message){
             console.log('Spark error:', err);
 
             if(err.message == "invalid_token"){
-                Error("Please provide a valid API token. You can find this token in the settings tab of" +
+                SetError("Please provide a valid API token. You can find this token in the settings tab of" +
                     " the online <a href='https://build.particle.io/build#settings' target='_blank'>build.particle.io</a>" +
                     " editor.",10000);
             }
-            else Error(" We could not find the device id, please check if the id is correct or check the" +
+            else SetError(" We could not find the device id, please check if the id is correct or check the" +
                 " javascript console for detailed feedback.",4000);
             return;
         }
@@ -117,13 +116,13 @@ function SendSparkMessage(message){
         device.callFunction('run',msg, function(err, data) {
             if (err) {
                 console.log('Spark error:', err);
-                Error(" We could not find the function 'run', please make sure the main function in the" +
+                SetError(" We could not find the function 'run', please make sure the main function in the" +
                     "Physikit Cube is called 'run' and check if the cube is connected to the network.",10000);
             } else {
                 console.log('Function "run" called succesfully:', data)
                 console.log('Message sent: ', msg);
 
-                Success("Function 'run' was called with message: " +
+                SetSuccess("Function 'run' was called with message: " +
                     "{mode: "+message.mode + ", setting: " +message.setting + ", args: " + message.args +
                     ", value: "+ message.value + "}, raw: '" + msg +"'.",4000);
             }
@@ -131,29 +130,40 @@ function SendSparkMessage(message){
     });
 }
 
-function Error(text,timeout){
-    $("#error").show();
-    $("#errorText").html(" "+text);
-
-    setTimeout(function(){
-        $("#error").hide();
-    }, timeout);
+var htmlInfo = function (text){
+    return "<div class='alert alert alert-info' role='alert' id='info'>" +
+        "<span class='glyphicon glyphicon glyphicon-info-sign' aria-hidden='true'></span>" +
+        "<span class='sr-only'>Info:</span>"+
+        "<strong> Info: </strong>"+text+"</div>";
 }
 
-function Success(text,timeout){
-    $("#success").show();
-    $("#successText").text(" "+text);
-    setTimeout(function(){
-        $("#success").hide();
-    }, timeout);
+var htmlError = function (text){
+    return "<div class='alert alert-danger' role='alert' id='error'>" +
+        "<span class='glyphicon glyphicon-exclamation-sign' aria-hidden='true'></span>" +
+        "<span class='sr-only'>Error:</span>"+
+        "<strong> Error! </strong>"+text+"</div>";
 }
 
-function Info(text,timeout){
-    $("#info").show();
-    $("#infoText").text(" "+text);
-    setTimeout(function(){
-        $("#info").hide();
-    }, timeout);
+var htmlSuccess = function (text){
+    return "<div class='alert alert-success' role='alert' id='success'>" +
+        "<span class='glyphicon glyphicon-thumbs-up' aria-hidden='true'></span>" +
+        "<span class='sr-only'>Succes:</span>"+
+        "<strong> Success! </strong>"+text+"</div>";
+}
+
+
+
+
+function SetError(text,timeout){
+    $(htmlError(text)).insertBefore('#messages').delay(timeout).fadeOut();
+}
+
+function SetSuccess(text,timeout){
+    $(htmlSuccess(text)).insertBefore('#messages').delay(timeout).fadeOut();
+}
+
+function SetInfo(text,timeout){
+    $(htmlInfo(text)).insertBefore('#messages').delay(timeout).fadeOut();
 }
 
 function Reset(){
