@@ -16,9 +16,8 @@
 <body>
 <div class="jumbotron">
     <div class="container">
-
-            <!-- Form Name -->
             <legend>Physikit Protocol Tester</legend>
+
             <div class="form-group">
                 <label for="token">Spark Access Token:</label>
                 <input type="text" class="form-control" id="token">
@@ -27,7 +26,6 @@
                 <label for="deviceId">Device Id:</label>
                 <input type="text" class="form-control" id="deviceId">
             </div>
-
             <div class="form-group">
                 <label for="mode">Mode</label>
                 <div class="controls">
@@ -45,8 +43,6 @@
                     </select>
                 </div>
             </div>
-
-            <!-- Select Basic -->
             <div class="form-group">
                 <label class="control-label" for="setting">Setting</label>
                 <div class="controls">
@@ -64,8 +60,6 @@
                     </select>
                 </div>
             </div>
-
-            <!-- Select Basic -->
             <div class="form-group">
                 <label for="args">Args</label>
                 <div class="controls">
@@ -83,20 +77,17 @@
                     </select>
                 </div>
             </div>
-
             <div class="form-group">
                 <label for="value">Value 0-255:</label>
                 <div class="controls">
                     <div>
-                        <input id="value" name="value" class="form-control" placeholder="255" type="text" required="">
+                        <input id="value" name="value" class="form-control" type="text" required="">
                     </div>
                 </div>
             </div>
-
-        <div class="checkbox" >
-            <label><input type="checkbox" id="saveCookie"> Remember me</label>
-        </div>
-            <!-- Button (Double) -->
+            <div class="checkbox" >
+                <label><input type="checkbox" id="saveCookie"> Remember me</label>
+            </div>
             <div class="form-group">
                 <label for="btnGo">Finished?</label>
                 <div class="controls">
@@ -104,10 +95,24 @@
                     <button id="btnReset" onclick="Reset()" name="btnReset" class="btn btn-inverse">Reset Form</button>
                 </div>
             </div>
+        <div class="alert alert-danger" role="alert" id="error" style="display: none;">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <span class="sr-only">Error:</span>
+        <strong>Alert!</strong> <span id="errorText"> Function 'run' was called.</span>
+    </div>
+        <div class="alert alert-success" role="alert" id="success" style="display: none;">
+            <span class="glyphicon glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>
+            <span class="sr-only">Success:</span>
+            <strong>Success!</strong><span id="successText"> Function 'run' was called.</span>
+        </div>
+        <div class="alert alert alert-info" role="alert" id="info" style="display: none;">
+            <span class="glyphicon glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+            <span class="sr-only">Info:</span>
+            <strong>Info!</strong><span id="infoText"> Function 'run' was called.</span>
+        </div>
+    </div>
 
 </div>
-
-    </div>
 
 
 <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>

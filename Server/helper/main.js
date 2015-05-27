@@ -2,80 +2,160 @@
  * Created by Steven on 26-5-2015.
  */
 
-
-
 $(document).ready(function() {
-    LoadTextCookie("token");
-    LoadTextCookie("deviceId");
-    LoadValueCookie("mode");
-    LoadValueCookie("setting");
-    LoadValueCookie("args");
-    LoadValueCookie("value");
+    //$("#error").hide();
+    //$("#success").hide();
+    //$("#info").hide();
+
+    var cookie =  $.cookie("data");
+
+    if(cookie != undefined){
+
+        var message = JSON.parse(cookie);
+        LoadText("token",message.token);
+        LoadText("deviceId",message.deviceId);
+        LoadValue("mode",message.mode);
+        LoadValue("args",message.args);
+        LoadValue("setting",message.setting);
+        LoadValue("value",message.value);
+    }
+    else{
+        Reset();
+    }
+
+    $('#token').on('input', function() {
+        loggedIn = false;
+    });
+
+    $('#token').on('input propertychange paste', function() {
+        loggedIn = false;
+    });
 });
 
-function LoadTextCookie(propertyName){
-    var prop = "#" + propertyName;
-    $( prop ).val(
-        $.cookie(propertyName)!=undefined ? $.cookie(propertyName): propertyName+ " here");
+function LoadText(propertyName,text){
+    $( "#" + propertyName).val(text);
 }
-function LoadValueCookie(propertyName){
-    var prop = "#" + propertyName;
-    $( prop ).val(
-        $.cookie(propertyName)!=undefined ? $.cookie(propertyName): 0);
+function LoadValue(propertyName,value){
+    $( "#" + propertyName ).val(value);
 }
 
+var loggedIn = false;
 
 function SendMessage(){
 
-    var cookie = {};
-    cookie.token =  $( "#token" ).val();
-    cookie.deviceId = $( "#deviceId" ).val();
+    //Grab the message from the form
+    var message = {};
+    message.token =  $( "#token" ).val();
+    message.deviceId = $( "#deviceId" ).val();
 
-    cookie.mode = $( "#mode" ).val()
-    cookie.args = $( "#args" ).val();
-    cookie.value = $( "#value" ).val();
-    cookie.setting = $( "#setting" ).val();
+    message.mode = $( "#mode" ).val()
+    message.args = $( "#args" ).val();
+    message.value = $( "#value" ).val();
+    message.setting = $( "#setting" ).val();
 
+    //Check if the value parameter is between 0 and 255
+    var vvalue = parseInt(message.value);
 
-    if($("#saveCookie").is(':checked')){
-        console.log(cookie.token);
-        console.log("Cookie data: "+ JSON.stringify(cookie));
-
-        $.cookie("token",cookie.token);
-        $.cookie("deviceId",cookie.deviceId);
-        $.cookie("mode",cookie.mode);
-        $.cookie("args",cookie.args);
-        $.cookie("setting",cookie.setting);
-        $.cookie("value",cookie.value);
+    if(isNaN(vvalue) || vvalue<0 || vvalue >255){
+        SetError(" Value '" + message.value + " ' is not a valid argument. Please choose a value between 0 and 255.",4000);
+        return;
     }
 
-    spark.on('login', function() {
-        spark.getDevice(cookie.deviceId, function(err, device) {
-            console.log('Device name: ' + device.name);
-            var msg = cookie.mode+"-"+cookie.setting+"-"+cookie.args+"-"+cookie.value;
-            device.callFunction('run',msg , function(err, data) {
-                if (err) {
-                    console.log('An error occurred:', err);
-                } else {
-                    console.log('Function run called succesfully:', data);
-                }
-            });
-        });
+    //Save the cookie if needed
+    if($("#saveCookie").is(':checked')){
+        $.cookie("data",JSON.stringify(message));
+        SetInfo("We saved your input data to a cookie",4000);
+    }
+
+
+    spark.on('login', function(err, body) {
+
+        if(err){
+            console.log("Spark login error: "+err);
+            SetError("Please provide a valid API token. You can find this token in the settings tab of" +
+                " the online <a href='https://build.particle.io/build#settings' target='_blank'>build.particle.io</a>" +
+                " editor.",10000);
+            return;
+        }
+        SendSparkMessage(message);
 
     });
 
-     spark.login({ accessToken: cookie.token });
+    if(!loggedIn){
+        spark.login({ accessToken: message.token });
+        loggedIn = true;
+    }
+    else{
+        SendSparkMessage(message);
+    }
+}
 
+
+
+function SendSparkMessage(message){
+    spark.getDevice(message.deviceId, function(err, device) {
+
+        if (err) {
+            console.log('Spark error:', err);
+
+            if(err.message == "invalid_token"){
+                SetError("Please provide a valid API token. You can find this token in the settings tab of" +
+                    " the online <a href='https://build.particle.io/build#settings' target='_blank'>build.particle.io</a>" +
+                    " editor.",10000);
+            }
+            else SetError(" We could not find the device id, please check if the id is correct or check the" +
+                " javascript console for detailed feedback.",4000);
+            return;
+        }
+
+        console.log('Device name: ' + device.name);
+        var msg = message.mode+"-"+message.setting+"-"+message.args+"-"+message.value;
+
+        device.callFunction('run',msg, function(err, data) {
+            if (err) {
+                console.log('Spark error:', err);
+                SetError(" We could not find the function 'run', please make sure the main function in the" +
+                    "Physikit Cube is called 'run' and check if the cube is connected to the network.",10000);
+            } else {
+                console.log('Function "run" called succesfully:', data)
+                console.log('Message sent: ', msg);
+
+                SetSuccess("Function 'run' was called with message: " +
+                    "{mode: "+message.mode + ", setting: " +message.setting + ", args: " + message.args +
+                    ", value: "+ message.value + "}, raw: '" + msg +"'.",4000);
+            }
+        });
+    });
+}
+
+function SetError(text,timeout){
+    $("#error").show();
+    $("#errorText").html(" "+text);
+
+    setTimeout(function(){
+        $("#error").hide();
+    }, timeout);
+}
+
+function SetSuccess(text,timeout){
+    $("#success").show();
+    $("#successText").text(" "+text);
+    setTimeout(function(){
+        $("#success").hide();
+    }, timeout);
+}
+
+function SetInfo(text,timeout){
+    $("#info").show();
+    $("#infoText").text(" "+text);
+    setTimeout(function(){
+        $("#info").hide();
+    }, timeout);
 }
 
 
 function Reset(){
-    $.removeCookie("token");
-    $.removeCookie("deviceId");
-    $.removeCookie("mode");
-    $.removeCookie("args");
-    $.removeCookie("setting");
-    $.removeCookie("value");
+    $.removeCookie("data");
 
     $( "#token" ).val("token here");
     $( "#deviceId" ).val("device id here");
@@ -83,4 +163,5 @@ function Reset(){
     $( "#args" ).val(0);
     $( "#setting" ).val(0);
     $( "#value" ).val(0);
+    loggedIn = false;
 }
