@@ -1,28 +1,28 @@
-/**
- * Created by Steven on 26-5-2015.
- */
 
+
+//Document is fully loaded
 $(document).ready(function() {
-    //$("#error").hide();
-    //$("#success").hide();
-    //$("#info").hide();
 
+    //Grab the cookie
     var cookie =  $.cookie("data");
 
+    //If cookie is not null, set the values
     if(cookie != undefined){
 
         var message = JSON.parse(cookie);
-        LoadText("token",message.token);
-        LoadText("deviceId",message.deviceId);
-        LoadValue("mode",message.mode);
-        LoadValue("args",message.args);
-        LoadValue("setting",message.setting);
-        LoadValue("value",message.value);
+        Text("token",message.token);
+        Text("deviceId",message.deviceId);
+        Value("mode",message.mode);
+        Value("args",message.args);
+        Value("setting",message.setting);
+        Value("value",message.value);
     }
+    //If not set the fields to default values
     else{
         Reset();
     }
 
+    //If we change token, we need to log in again
     $('#token').on('input', function() {
         loggedIn = false;
     });
@@ -32,15 +32,20 @@ $(document).ready(function() {
     });
 });
 
-function LoadText(propertyName,text){
+//Set text of input fields
+function Text(propertyName,text){
     $( "#" + propertyName).val(text);
 }
-function LoadValue(propertyName,value){
+
+//Set value of value fields
+function Value(propertyName,value){
     $( "#" + propertyName ).val(value);
 }
 
+//Check if we logged in already
 var loggedIn = false;
 
+//Handles form submit
 function SendMessage(){
 
     //Grab the message from the form
@@ -57,22 +62,22 @@ function SendMessage(){
     var vvalue = parseInt(message.value);
 
     if(isNaN(vvalue) || vvalue<0 || vvalue >255){
-        SetError(" Value '" + message.value + " ' is not a valid argument. Please choose a value between 0 and 255.",4000);
+        Error(" Value '" + message.value + " ' is not a valid argument. Please choose a value between 0 and 255.",4000);
         return;
     }
 
     //Save the cookie if needed
     if($("#saveCookie").is(':checked')){
         $.cookie("data",JSON.stringify(message));
-        SetInfo("We saved your input data to a cookie",4000);
+        Info("We saved your input data to a cookie",4000);
     }
 
-
+    //When spark is logged in
     spark.on('login', function(err, body) {
 
         if(err){
             console.log("Spark login error: "+err);
-            SetError("Please provide a valid API token. You can find this token in the settings tab of" +
+            Error("Please provide a valid API token. You can find this token in the settings tab of" +
                 " the online <a href='https://build.particle.io/build#settings' target='_blank'>build.particle.io</a>" +
                 " editor.",10000);
             return;
@@ -90,8 +95,6 @@ function SendMessage(){
     }
 }
 
-
-
 function SendSparkMessage(message){
     spark.getDevice(message.deviceId, function(err, device) {
 
@@ -99,11 +102,11 @@ function SendSparkMessage(message){
             console.log('Spark error:', err);
 
             if(err.message == "invalid_token"){
-                SetError("Please provide a valid API token. You can find this token in the settings tab of" +
+                Error("Please provide a valid API token. You can find this token in the settings tab of" +
                     " the online <a href='https://build.particle.io/build#settings' target='_blank'>build.particle.io</a>" +
                     " editor.",10000);
             }
-            else SetError(" We could not find the device id, please check if the id is correct or check the" +
+            else Error(" We could not find the device id, please check if the id is correct or check the" +
                 " javascript console for detailed feedback.",4000);
             return;
         }
@@ -114,13 +117,13 @@ function SendSparkMessage(message){
         device.callFunction('run',msg, function(err, data) {
             if (err) {
                 console.log('Spark error:', err);
-                SetError(" We could not find the function 'run', please make sure the main function in the" +
+                Error(" We could not find the function 'run', please make sure the main function in the" +
                     "Physikit Cube is called 'run' and check if the cube is connected to the network.",10000);
             } else {
                 console.log('Function "run" called succesfully:', data)
                 console.log('Message sent: ', msg);
 
-                SetSuccess("Function 'run' was called with message: " +
+                Success("Function 'run' was called with message: " +
                     "{mode: "+message.mode + ", setting: " +message.setting + ", args: " + message.args +
                     ", value: "+ message.value + "}, raw: '" + msg +"'.",4000);
             }
@@ -128,7 +131,7 @@ function SendSparkMessage(message){
     });
 }
 
-function SetError(text,timeout){
+function Error(text,timeout){
     $("#error").show();
     $("#errorText").html(" "+text);
 
@@ -137,7 +140,7 @@ function SetError(text,timeout){
     }, timeout);
 }
 
-function SetSuccess(text,timeout){
+function Success(text,timeout){
     $("#success").show();
     $("#successText").text(" "+text);
     setTimeout(function(){
@@ -145,14 +148,13 @@ function SetSuccess(text,timeout){
     }, timeout);
 }
 
-function SetInfo(text,timeout){
+function Info(text,timeout){
     $("#info").show();
     $("#infoText").text(" "+text);
     setTimeout(function(){
         $("#info").hide();
     }, timeout);
 }
-
 
 function Reset(){
     $.removeCookie("data");

@@ -23,12 +23,18 @@ var SmartCitizenKitCollection = function(arrayOfKitKeys)
 
     arrayOfKitKeys.forEach(function(kitKey) {
 
-        var kit =  new SmartCitizenKit(kitKey.id,kitKey.token,kitKey.deviceId);
+        var kit = new SmartCitizenKit(kitKey.id,kitKey.token,kitKey.deviceId);
+        self.kits.push(kit);
+
+
         kit.on('DataReceived', function( id, data) {
-            self.kits.push(kit);
             self.emit('DataReceived', id, data);
         });
     });
+
+}
+
+function AddKit(kitKey){
 
 }
 

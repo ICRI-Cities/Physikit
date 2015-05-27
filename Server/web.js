@@ -56,18 +56,19 @@ app.post('/api',function(req,res){
 //------------------------------------------------------------------------
 // All the smart Citizen kits
 //------------------------------------------------------------------------
-var kit = new SmartCitizenKitCollection([keys.smartCitizenKit1]);
+var kit = new SmartCitizenKitCollection([keys.smartCitizenKit1,keys.smartCitizenKit2, keys.smartCitizenKit3]);
 
 //When new data is received
 kit.on('DataReceived', function(id,data) {
+
+    if(keys.debug)  console.log("Smart Citizen Kit "+ id + " received data on "+ data.device.last_insert_datetime);
 
     //Send the data to all clients
     io.emit('smartcitizen',id,data);
 
     //Since we have new data, we need to run all rules
-    RunRules();
+    RunRules("smartcitizen kit "+id+" reported new data.");
 
-    if(keys.debug) console.log("Smart Citizen Kit "+id + " received data on "+ data.device.last_insert_datetime);
 });
 
 //------------------------------------------------------------------------
@@ -80,18 +81,34 @@ var db = new Database();
 //from the smart citizen kit or when a new rule
 //is added by a user.
 //------------------------------------------------------------------------
-function RunRules(){
+function RunRules(reason,id){
 
-    if(keys.debug) console.log("running rules");
+    if(keys.debug) console.log("Running rules because "+reason);
 
-    //Grab all the rules from the DB
-    db.FindAll("rules", function (list) {
-        list.forEach(function(rule) {
+    if(id == undefined) {
+        //Grab all the rules from the DB
+        db.FindAll("rules", function (list) {
+            list.forEach(function (rule) {
 
-            //Run rule
-            RunRule(rule);
+                //Run rule
+                RunRule(rule);
+            });
         });
-    });
+    }
+    else{
+        FindUser(id, function (result) {
+
+            if (result != "") {
+                db.FindById("rules","id",id.toString(),function(list){
+                    list.forEach(function (rule) {
+
+                        //Run rule
+                        RunRule(rule);
+                    });
+                })
+            }
+        });
+    }
 }
 
 //------------------------------------------------------------------------
@@ -132,11 +149,39 @@ function Find(type,fieldName,id, callback){
 }
 
 //helper functions for rules and users
-function FindRule(id,callback){
-    Find("rules","cube",id,callback);   //"rules" collection in database, and search for "cube" field
+function FindRule(id,cubeName,callback){
+
+    //Find the user
+    FindUser(id, function (result) {
+
+        //No user
+        if (result == "") {
+            return;
+        }
+
+        //Grab all the rules from the user
+        db.FindById("rules","id",result.id.toString(),function(list){
+            var found = false;
+            //Iterate through the list of rules of this users
+            list.forEach(function (rule) {
+
+                //If there is a rule for the cube, send it back
+                if(rule.cube == cubeName ){
+                    callback(rule);
+                    found= true;
+                    return;
+                }
+            });
+
+            //If we did not found the rule, callback undefined
+            if(!found)
+                callback(undefined);
+        })
+
+    });
 }
 function FindUser(id,callback){
-    Find("users","id",id,callback);     //"users" collection in database, and search for "id" field
+    Find("users","id",id,callback);
 }
 
 //------------------------------------------------------------------------
@@ -177,7 +222,7 @@ io.on('connection', function(socket){
 
         //Since we have a new connection, let's run the rules
         //to make sure we're updated
-        RunRules();
+        RunRules("client connected",result.id);
 
     });
 
@@ -239,7 +284,7 @@ function AddRule(rule,callback){
         }
 
         //Check if rule exists for this cube
-        FindRule(rule.cube,function(result){
+        FindRule(rule.id,rule.cube,function(ruleResult){
 
             //These are our defaults
             var cubes = ["light", "fan", "move","buzz"];
@@ -252,9 +297,18 @@ function AddRule(rule,callback){
                 if(sensors.indexOf(rule.smartSensor) >-1){
 
                     //Add new rule or replace if exist
-                    if(result == "") db.Add("rules",rule);
-
-                    else db.Replace("rules",rule,"cube",rule.cube);
+                    console.log("ruleresult: " +ruleResult);
+                    if(ruleResult == undefined)
+                    {
+                        db.Add("rules",rule);
+                        console.log("rule created");
+                    }
+                    //function(collection,entity,fieldName,id)
+                    else
+                    {
+                        db.Replace("rules",rule,"_id",ruleResult._id);
+                        console.log("rule replaced");
+                    }
 
                     //Run the new rule
                     RunRule(rule);

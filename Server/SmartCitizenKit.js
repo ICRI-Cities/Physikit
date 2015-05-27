@@ -16,7 +16,7 @@ var Keys = require('./privateKeys');
 var keys = new Keys();
 
 //Keep self reference
-var self;
+
 
 //The SmartCitizenKit object
 var SmartCitizenKit =  function(id, token, deviceId){
@@ -26,7 +26,7 @@ var SmartCitizenKit =  function(id, token, deviceId){
     this.token = token;
     this.deviceId = deviceId;
 
-    self =  this;
+    var self =  this;
 
     //Uses interval to poll the API
     setInterval(function () {
@@ -51,7 +51,7 @@ var SmartCitizenKit =  function(id, token, deviceId){
                 if(self.lastpost == undefined)
                 {
                     //send an event to report new data
-                    self.emit("DataReceived", self.id, data);
+                    //self.emit("DataReceived", self.id, data);
 
                     //cache data
                     self.lastpost = data;
