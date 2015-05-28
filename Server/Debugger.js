@@ -4,7 +4,6 @@
 
 //Debug purposes
 var moment = require('moment');
-
 var fs = require('fs');
 
 exports.output = function(){
