@@ -6,23 +6,22 @@
 var moment = require('moment');
 var fs = require('fs');
 
-exports.output = function(){
-    return true;
-}
+exports.output = false;
 
-exports.details = function(){
-    return false;
-}
+exports.details = false;
 
-exports.disablePhysikitCalls = function(){
-    return true;
-}
+exports.disablePhysikitCalls = true;
 
-exports.log = function(text){
-    var msg = moment().format("D MMM HH:mm:ss") + " - "+text
+exports.log = function(text) {
+    var msg = moment().format("D MMM HH:mm:ss") + " - " + text
     console.log(msg);
 
     fs.appendFile('./Logs/data.log', msg + "\n", function (err) {
-        if(err) console.log("Error writing to file");
+        if (err) console.log("Error writing to file");
     });
+}
+
+
+exports.spacer = function(){
+    console.log(moment().format("D MMM HH:mm:ss") + " - " +"---------------------------------------");
 }

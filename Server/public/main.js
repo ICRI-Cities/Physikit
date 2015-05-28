@@ -10,7 +10,7 @@ var socket;
 //develop url. Change for deployment.
 //var url= "https://physikit.herokuapp.com/api/";
 
-var url = "http://localhost:3000/api/";
+var url = "/api/";
 
 //login the user with id (id: 1-5 depending on famility/kit; can be changed to more complex
 //password and username)
@@ -194,7 +194,7 @@ function HandleSmartCitizenMessage(id,data){
 
 //Handles Physikit Messages
 function HandleRuleMessage(rule){
-    console.log("kit "+ rule.cube + " cube message: "+rule);
+    console.log("kit "+ rule.cube + " cube message: "+JSON.stringify(rule));
 
     var checkState = (rule.value > 0);
 

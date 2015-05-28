@@ -34,6 +34,17 @@ app.use(express.static(path.join(__dirname, './public')));
 app.use("/helper", express.static(__dirname + "/helper"));
 app.use(bodyParser.json());
 
+
+//------------------------------------------------------------------------
+//Check application cmd params
+//------------------------------------------------------------------------
+process.argv.forEach(function(val, index, array) {
+    if(val == "-o") debug.output= true;
+    if(val == "-od") debug.details = true;
+    if(val == "-phys") debug.disablePhysikitCalls = false;
+
+});
+
 //------------------------------------------------------------------------
 //Important rest call used for authentication.
 //------------------------------------------------------------------------
@@ -87,15 +98,28 @@ var db = new Database();
 //------------------------------------------------------------------------
 function RunRules(reason,id){
 
+    //Add a "---" spacer in the console when printing all the details
+    if(debug.details) debug.spacer();
+
+    //Print reason for update
     if(debug.output) debug.log("Run rules -> "+reason);
 
+    //if value is undefined
     if(id == undefined) {
+
         //Grab all the rules from the DB
         db.FindAll("rules", function (list) {
+
+            //Add spacer
+            if(debug.details) debug.spacer();
+
+
             list.forEach(function (rule) {
                 //Run rule
                 RunRule(rule);
-            });
+            })
+
+            if(debug.details) debug.spacer();
         });
     }
     else{
@@ -107,11 +131,16 @@ function RunRules(reason,id){
 
                 //Find the rules for this user
                 db.FindById("rules","id",id.toString(),function(list){
+
+                    if(debug.details) debug.spacer();
+
                     list.forEach(function (rule) {
 
                         //Run rule
                         RunRule(rule);
                     });
+
+                    if(debug.details) debug.spacer();
                 })
             }
         });
@@ -214,7 +243,7 @@ io.on('connection', function(socket){
         }
 
         //User found
-        if(debug.output)  debug.log('Client connect with id: ', socket.client.request._query.id);
+        if(debug.output)  debug.log('Client connect with id: ' + socket.client.request._query.id);
 
         //Put socket into a separate channel for that id, so we don't do cross-talk across
         //several groups of clients
@@ -224,8 +253,9 @@ io.on('connection', function(socket){
         kit.kits.forEach(function(kit){
 
             //Send smart citizen data to all clients, independent on their id
-            //and thus joined channel.
-            socket.emit('smartcitizen',kit.id,kit.lastpost);
+
+            if(kit.lastpost !=null || kit.lastpost != undefined)
+                socket.emit('smartcitizen',kit.id,kit.lastpost);
         });
 
         //Since we have a new connection, let's run the rules
