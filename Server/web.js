@@ -25,6 +25,13 @@ var Rule = require('./Rule');
 var Keys = require('./privateKeys');
 var keys = new Keys();
 
+domain = require('domain'),
+    d = domain.create();
+
+d.on('error', function(err) {
+    console.error(err);
+});
+
 //------------------------------------------------------------------------
 //User app as web sever that serves public folder
 //------------------------------------------------------------------------
@@ -117,8 +124,8 @@ function RunRules(reason,id){
 function RunRule(rule){
 
     //Update the Physikit with the new rule
-    UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,rule.value);
-
+    //UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,rule.value);
+    console.log("dummy call");
     //Send update event
     io.to(rule.id).emit('rule',rule);
 
