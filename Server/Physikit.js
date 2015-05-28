@@ -16,6 +16,8 @@ var util = require('util');
 var Keys = require('./privateKeys');
 var keys = new Keys();
 
+var debug = require('./Debugger');
+
 
 //The main object
 var Physikit = function(id,physikitKeys){
@@ -32,25 +34,25 @@ var Physikit = function(id,physikitKeys){
     //Set the fan
     this.fan = function SetFanDevice(mode,setting,args,value){
         SetDevice("fan",self.keys.fanDeviceToken,mode,setting,args,value);
-        if(keys.debug) console.log("Kit " + self.id+" -> Set fan: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
+        if(debug.details) debug.log("Kit " + self.id+" -> Set fan: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
     };
 
     //Set the light
     this.light = function SetLightDevice(mode,setting,args,value){
         SetDevice("light",self.keys.lightDeviceToken,mode,setting,args,value);
-        if(keys.debug) console.log("Kit " + self.id+" -> Set light: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
+        if(debug.details) debug.log("Kit " + self.id+" -> Set light: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
     };
 
     //Set the move
     this.move =  function SetMoveDevice(mode,setting,args,value){
         SetDevice("move",self.keys.moveDeviceToken,mode,setting,args,value);
-        if(keys.debug) console.log("Kit " + self.id+" -> Set move: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
+        if(debug.details) debug.log("Kit " + self.id+" -> Set move: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
     };
 
     //Set the buzz
     this.buzz = function SetBuzzDevice(mode,setting,args,value){
         SetDevice("buzz",self.keys.buzzDeviceToken,mode,setting,args,value);
-        if(keys.debug) console.log("Kit " + self.id+" -> Set buzz: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
+        if(debug.details) debug.log("Kit " + self.id+" -> Set buzz: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
     };
 
     this.monitor = function Monitor(callback){
@@ -67,7 +69,7 @@ var Physikit = function(id,physikitKeys){
     function SetDevice(name,token, mode, setting,args, value ) {
         spark.getDevice(token, function (err, device) {
                 if(err){
-                    console.log(err);
+                    debug.log(err);
                     return;
                 }
 
@@ -75,16 +77,16 @@ var Physikit = function(id,physikitKeys){
                 //This should never happen, for some reason does happen.
                 //Perhaps it's a bug in the Spark API
                 if(device==null){
-                    console.log(token);
-                    console.log(device);
-                    console.log(name);
+                    debug.log(token);
+                    debug.log(device);
+                    debug.log(name);
                     return;
                 }
 
                 //spark function run("a-b-c") a:mode, b:setting, c:value
                 device.callFunction('run', mode + '-' + setting+ '-'  +args + '-'+ value, function (err, data) {
                     if (err) {
-                        if(keys.debug) console.log('Could not connect to '+name+ ':', err);
+                        if(debug.details) debug.log('Could not connect to '+name+ ':', err);
                     }
                 });
             });
@@ -97,7 +99,7 @@ var Physikit = function(id,physikitKeys){
         eventSource.addEventListener('hello', function(e) {
             var data =  JSON.parse(e.data)
             callback(data);
-            if(keys.debug) console.log("Cube " +cubeName + " says " + data);
+            if(debug.details) debug.log("Cube " +cubeName + " says " + data);
         },false);
     }
 

@@ -19,9 +19,8 @@ var Keys = function(){
         deviceId: 2278,
         id:3
     };
-    this.debug = true,
     this.databaseUrl ='mongodb://physikit:physikit@ds031942.mongolab.com:31942/physikit';
-    this.jwtKey = 'fdsldsoiewuroiewuriqwjdshfksh'
+    this.jwtKey = 'fdsldsoiewuroiewuriqwjdshfksh';
 }
 
 module.exports = Keys;

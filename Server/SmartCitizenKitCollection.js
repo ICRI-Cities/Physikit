@@ -11,31 +11,23 @@ var EventEmitter =  require('events').EventEmitter;
 
 var util = require('util');
 
-//Keep self reference
-var self;
 
 var SmartCitizenKit = require('./SmartCitizenKit');
 
 var SmartCitizenKitCollection = function(arrayOfKitKeys)
 {
     this.kits = [];
-    self =  this;
+    var self =  this;
 
     arrayOfKitKeys.forEach(function(kitKey) {
 
         var kit = new SmartCitizenKit(kitKey.id,kitKey.token,kitKey.deviceId);
         self.kits.push(kit);
 
-
         kit.on('DataReceived', function( id, data) {
             self.emit('DataReceived', id, data);
         });
     });
-
-}
-
-function AddKit(kitKey){
-
 }
 
 //Make sure object inherits from EventEmitter

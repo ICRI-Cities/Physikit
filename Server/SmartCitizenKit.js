@@ -11,13 +11,6 @@ var EventEmitter =  require('events').EventEmitter;
 
 var util = require('util');
 
-//Grab the private keys
-var Keys = require('./privateKeys');
-var keys = new Keys();
-
-//Keep self reference
-
-
 //The SmartCitizenKit object
 var SmartCitizenKit =  function(id, token, deviceId){
     this.lastpost = undefined;
@@ -70,7 +63,7 @@ var SmartCitizenKit =  function(id, token, deviceId){
 
         // Report errors
         request.on('error', function(error) {
-            if(keys.debug) console.log("Error while calling endpoint.", error);
+            self.emit('error: ' + error );
         });
 
         request.end();

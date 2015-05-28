@@ -25,12 +25,7 @@ var Rule = require('./Rule');
 var Keys = require('./privateKeys');
 var keys = new Keys();
 
-domain = require('domain'),
-    d = domain.create();
-
-d.on('error', function(err) {
-    console.error(err);
-});
+var debug = require('./Debugger');
 
 //------------------------------------------------------------------------
 //User app as web sever that serves public folder
@@ -63,23 +58,25 @@ app.post('/api',function(req,res){
 //------------------------------------------------------------------------
 // All the smart Citizen kits
 //------------------------------------------------------------------------
+
 var kit = new SmartCitizenKitCollection([keys.smartCitizenKit1,keys.smartCitizenKit2, keys.smartCitizenKit3]);
 
 //When new data is received
 kit.on('DataReceived', function(id,data) {
 
-    if(keys.debug)  console.log("Smart Citizen Kit "+ id + " received data on "+ data.device.last_insert_datetime);
+    if(debug.output)  debug.log("Smart Citizen Kit "+ id + " received data on "+ data.device.last_insert_datetime);
 
     //Send the data to all clients
     io.emit('smartcitizen',id,data);
 
     //Since we have new data, we need to run all rules
-    RunRules("smartcitizen kit "+id+" reported new data.");
-
+    RunRules("Smartcitizen kit "+id+" reported new data.");
 });
 
+
+
 //------------------------------------------------------------------------
-// Database connection
+// Handle to Database connection
 //------------------------------------------------------------------------
 var db = new Database();
 
@@ -90,22 +87,25 @@ var db = new Database();
 //------------------------------------------------------------------------
 function RunRules(reason,id){
 
-    if(keys.debug) console.log("Running rules because "+reason);
+    if(debug.output) debug.log("Run rules -> "+reason);
 
     if(id == undefined) {
         //Grab all the rules from the DB
         db.FindAll("rules", function (list) {
             list.forEach(function (rule) {
-
                 //Run rule
                 RunRule(rule);
             });
         });
     }
     else{
+        //Find the user
         FindUser(id, function (result) {
 
+            //If user is not null
             if (result != "") {
+
+                //Find the rules for this user
                 db.FindById("rules","id",id.toString(),function(list){
                     list.forEach(function (rule) {
 
@@ -124,12 +124,13 @@ function RunRules(reason,id){
 function RunRule(rule){
 
     //Update the Physikit with the new rule
-    //UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,rule.value);
-    console.log("dummy call");
+    if(!debug.disablePhysikitCalls)
+        UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,rule.value);
+
     //Send update event
     io.to(rule.id).emit('rule',rule);
 
-    if(keys.debug) console.log("Run rule for " + rule.cube + " on kit "+ rule.id);
+    if(debug.details) debug.log("Run rule for " + rule.cube + " on Physikit "+ rule.id);
 }
 
 
@@ -145,8 +146,8 @@ function Find(type,fieldName,id, callback){
         return;
     }
 
-    //Ask the db, make sure to stringify the input
-    db.FindById(type,fieldName.toString(),id.toString(),function(list){
+        //Ask the db, make sure to stringify the input
+        db.FindById(type,fieldName.toString(),id.toString(),function(list){
 
         //if list[0] == null, the array is empty and nothing was found
         //callback nothing or list
@@ -213,7 +214,7 @@ io.on('connection', function(socket){
         }
 
         //User found
-        if(keys.debug)  console.log('Client connect with id: ', socket.client.request._query.id);
+        if(debug.output)  debug.log('Client connect with id: ', socket.client.request._query.id);
 
         //Put socket into a separate channel for that id, so we don't do cross-talk across
         //several groups of clients
@@ -229,7 +230,7 @@ io.on('connection', function(socket){
 
         //Since we have a new connection, let's run the rules
         //to make sure we're updated
-        RunRules("client connected",result.id);
+        RunRules("Client connected",result.id);
 
     });
 
@@ -244,11 +245,11 @@ io.on('connection', function(socket){
     socket.on('disconnect', function() {
 
         // We don't really need to do anything here
-        if(keys.debug)  console.log('Client disconnect with id: ', socket.client.request._query.id);
+        if(debug.output)  debug.log('Client disconnect with id: ', socket.client.request._query.id);
     });
 
     //The client send a message for the Physikit
-    //WARNING: keys.debug method, do not use, will disrupt the rule system!!!
+    //WARNING: debug.output method, do not use, will disrupt the rule system!!!
     socket.on('message', function(id,cube,mode,setting,args,value){
 
         //Update Physikit
@@ -266,7 +267,7 @@ function UpdatePhysikit(id,cube,mode,setting,args,value){
 
         //No user found, stop function
         if (result == "") {
-            if(keys.debug) console.log("405 access denied");
+            if(debug.output) debug.log("405 access denied");
             return;
         }
 
@@ -304,18 +305,7 @@ function AddRule(rule,callback){
                 if(sensors.indexOf(rule.smartSensor) >-1){
 
                     //Add new rule or replace if exist
-                    console.log("ruleresult: " +ruleResult);
-                    if(ruleResult == undefined)
-                    {
-                        db.Add("rules",rule);
-                        console.log("rule created");
-                    }
-                    //function(collection,entity,fieldName,id)
-                    else
-                    {
-                        db.Replace("rules",rule,"_id",ruleResult._id);
-                        console.log("rule replaced");
-                    }
+                    ruleResult == undefined ? db.Add("rules",rule):db.Replace("rules",rule,"_id",ruleResult._id);
 
                     //Run the new rule
                     RunRule(rule);
@@ -350,10 +340,12 @@ function AddRule(rule,callback){
 }
 
 //------------------------------------------------------------------------
-//The server runs on default Heroku port or 3000 for keys.debug
+//The server runs on default Heroku port or 3000 for debug.output
 //------------------------------------------------------------------------
 httpApp.listen(process.env.PORT || 3000, function(){
-    if(keys.debug) console.log('server running on *:3000');
+    if(debug.output) debug.log('server running on *:3000');
+
+    RunRules("Server started");
 });
 
 

@@ -16,6 +16,8 @@ var EventEmitter =  require('events').EventEmitter;
 var assert = require('assert');
 var util = require('util');
 
+var debug = require('./Debugger');
+
 //Self reference
 var self;
 
@@ -32,7 +34,7 @@ var Database = function(){
 var insertDocument = function(db,collection, entity, callback) {
     db.collection(collection).insertOne( entity, function(err, result) {
         assert.equal(err, null);
-        console.log("Inserted " + JSON.stringify(entity) +" into " + collection);
+        if(debug.output)  debug.log("Inserted " + JSON.stringify(entity) +" into " + collection);
         self.emit("inserted",collection, entity);
         if(callback != undefined) callback(result);
     });
@@ -45,8 +47,8 @@ var updateDocument  = function(db,collection,newEntity,fieldName,id, callback){
     db.collection(collection).replaceOne(query,newEntity,
         function(err, results) {
             if(err)
-                console.log(err);
-            console.log("Replace and put " + JSON.stringify(newEntity) +" into " + collection);
+                if(debug.output)  debug.log(err);
+            if(debug.output)  debug.log("Replace and put " + JSON.stringify(newEntity) +" into " + collection);
             if(callback != undefined) callback();
         });
 };
