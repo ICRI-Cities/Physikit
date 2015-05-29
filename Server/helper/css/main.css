@@ -11,6 +11,14 @@ ul.nav li.dropdown:hover ul.dropdown-menu {
    display: block;
 }
 
+#divMode, #divSetting {
+   width: 60px;
+   float: left;
+....
+}
+
+
+
 
 
 

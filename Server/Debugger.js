@@ -10,7 +10,7 @@ exports.output = false;
 
 exports.details = false;
 
-exports.disablePhysikitCalls = true;
+exports.disablePhysikitCalls = false;
 
 exports.log = function(text) {
     var msg = moment().format("D MMM HH:mm:ss") + " - " + text

@@ -7,7 +7,6 @@
     <link href="css/bootstrap-theme.min.css" rel="stylesheet" >
     <link href="css/main.css" rel="stylesheet" >
     <link href="css/bootstrap.css" rel="stylesheet">
-    <link href="css/bootstrap-switch.css" rel="stylesheet">
     <link href="css/bootstrap-slider.css" rel="stylesheet">
     <!--<link href="ui/jquery-ui.css" rel="stylesheet">-->
     <link type="text/css" href="css/jquery-ui-custom.css" rel="stylesheet" />
@@ -16,19 +15,31 @@
 <body>
 <div class="jumbotron">
     <div class="container">
-            <legend>Physikit Protocol Tester V. 0.1 updated at <span id="date"></span></legend>
+            <h2>Physikit Protocol Tester</h2>
 
-            <div class="form-group">
-                <label for="token">Spark Access Token:</label>
-                <input type="text" class="form-control" id="token">
+
+        <div id="tokenGroup"  class="form-group has-feedback">
+            <label class="control-label" for="token">Spark Access Token:</label>
+            <div class="input-group">
+                <span class="input-group-addon"><span class="glyphicon glyphicon-lock" aria-hidden="true"></span></span>
+                <input type="text" class="form-control" id="token" aria-describedby="inputGroupSuccess1Status">
             </div>
-            <div class="form-group">
-                <label for="deviceId">Device Id:</label>
-                <input type="text" class="form-control" id="deviceId">
+            <span id="tokenFeedback"  aria-hidden="true"></span>
+        </div>
+
+        <div id="deviceIdGroup" class="form-group has-feedback">
+            <label class="control-label" for="deviceId">Device Id:</label>
+            <div class="input-group">
+                <span class="input-group-addon"><span class="glyphicon glyphicon-flash" aria-hidden="true"></span></span>
+                <input type="text" class="form-control" id="deviceId" aria-describedby="inputGroupSuccess1Status">
             </div>
-            <div class="form-group">
+            <span id="deviceIdFeedback"></span>
+        </div>
+
+            <div class="form-group" id="divMode">
+
                 <label for="mode">Mode</label>
-                <div class="controls">
+                <div class="form-controls">
                     <select id="mode" name="mode" class="input-xlarge">
                         <option>0</option>
                         <option>1</option>
@@ -43,9 +54,9 @@
                     </select>
                 </div>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="divSetting">
                 <label class="control-label" for="setting">Setting</label>
-                <div class="controls">
+                <div class="form-controls">
                     <select id="setting" name="setting" class="input-xlarge">
                         <option>0</option>
                         <option>1</option>
@@ -60,10 +71,10 @@
                     </select>
                 </div>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="divArgs">
                 <label for="args">Args</label>
-                <div class="controls">
-                    <select id="args" name="args" class="input-xlarge">
+                <div class="form-controls">
+                    <select id="args" name="args" class=".dropdown">
                         <option>0</option>
                         <option>1</option>
                         <option>2</option>
@@ -77,14 +88,17 @@
                     </select>
                 </div>
             </div>
-            <div class="form-group">
-                <label for="value">Value 0-255:</label>
-                <div class="controls">
-                    <div>
-                        <input id="value" name="value" class="form-control" type="text" required="">
-                    </div>
-                </div>
+
+
+        <div id="valueGroup" class="form-group has-feedback">
+            <label class="control-label" for="value">Device Id:</label>
+            <div class="input-group">
+                <span class="input-group-addon"><span class="glyphicon glyphicon-envelope" aria-hidden="true"></span></span>
+                <input type="text" class="form-control" id="value" aria-describedby="inputGroupSuccess1Status">
             </div>
+            <span id="valueFeedback"></span>
+        </div>
+
             <div class="checkbox" >
                 <label><input type="checkbox" id="saveCookie"> Remember me</label>
             </div>
@@ -92,7 +106,7 @@
                 <label for="btnGo">Finished?</label>
                 <div class="controls">
                     <button id="btnGo" onclick="SendMessage()" name="btnGo" class="btn btn-success">Send Message</button>
-                    <button id="btnReset" onclick="Reset()" name="btnReset" class="btn btn-inverse">Reset Form</button>
+                    <button id="btnReset" onclick="MoveToResetMode()" name="btnReset" class="btn btn-inverse">Reset Form</button>
                 </div>
             </div>
 
@@ -131,7 +145,8 @@
 
 <script src="main.js"></script>
 
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/sparkjs/0.4.2/spark.min.js">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/sparkjs/0.4.2/spark.min.js">
+
 </script>
 
 </html>
