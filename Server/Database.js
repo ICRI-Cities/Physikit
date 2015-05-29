@@ -55,16 +55,23 @@ var updateDocument  = function(db,collection,newEntity,fieldName,id, callback){
 
 //Find function
 var findDocuments = function(db,collection,callback){
-    var cursor = db.collection(collection).find();
-    var list = [];
-    cursor.each(function(err, doc) {
-        if(err)if(debug.output) console.log("Error trying to find documents: " +err);
-        if (doc != null) {
-            list.push(doc);
-        } else {
-            if(callback != undefined) callback(list);
-        }
+
+    db.collection(collection).find(function(err, cursor){
+        if(err)if(debug.output) console.log("Collection not found: " +err);
+
+        var list = [];
+        cursor.each(function(err, doc) {
+            if(err)if(debug.output) console.log("Error trying to find documents: " +err);
+            if (doc != null) {
+                list.push(doc);
+            } else {
+                if(callback != undefined) callback(list);
+            }
+        });
     });
+
+
+
 }
 
 //Find by id function
@@ -73,16 +80,20 @@ var findDocumentsWithId = function(db,collection,fieldName, id,callback){
     var query = {};
     query[fieldName] = id;
 
-    var cursor = db.collection(collection).find(query);
-    var list = [];
-    cursor.each(function(err, doc) {
-        if(err)if(debug.output) console.log("Error trying to find documents: " +err);assert.equal(err, null);
-        if (doc != null) {
-            list.push(doc);
-        } else {
-            if(callback != undefined) callback(list);
-        }
+    db.collection(collection).find(query,function(err,cursor){
+
+        if(err)if(debug.output) console.log("Collection not found: " +err);
+        var list = [];
+        cursor.each(function(err, doc) {
+            if(err)if(debug.output) console.log("Error trying to find documents: " +err);assert.equal(err, null);
+            if (doc != null) {
+                list.push(doc);
+            } else {
+                if(callback != undefined) callback(list);
+            }
+        });
     });
+
 }
 
 var replace = function(collection,entity,fieldName,id){

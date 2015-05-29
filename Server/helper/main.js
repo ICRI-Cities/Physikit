@@ -1,6 +1,24 @@
 //Document is fully loaded
 $(document).ready(function() {
 
+
+    var today = new Date();
+    var dd = today.getDate();
+    var mm = today.getMonth()+1; //January is 0!
+    var yyyy = today.getFullYear();
+
+    if(dd<10) {
+        dd='0'+dd
+    }
+
+    if(mm<10) {
+        mm='0'+mm
+    }
+
+    today = mm+'/'+dd+'/'+yyyy;
+
+    $("#date").text(today);
+
     //Grab the cookie
     var cookie =  $.cookie("data");
 
@@ -71,23 +89,23 @@ function SendMessage(){
         SetInfo("We saved your input data to a cookie",4000);
     }
 
-    //When spark is logged in
-    spark.on('login', function(err, body) {
-
-        if(err){
-            console.log("Spark login error: "+err);
-            SetError("Please provide a valid API token. You can find this token in the settings tab of" +
-                " the online <a href='https://build.particle.io/build#settings' target='_blank'>build.particle.io</a>" +
-                " editor.",10000);
-            return;
-        }
-        SendSparkMessage(message);
-
-    });
-
     if(!loggedIn){
+        //When spark is logged in
+        spark.on('login', function(err, body) {
+
+            if(err){
+                console.log("Spark login error: "+err);
+                SetError("Please provide a valid API token. You can find this token in the settings tab of" +
+                    " the online <a href='https://build.particle.io/build#settings' target='_blank'>build.particle.io</a>" +
+                    " editor.",10000);
+                return;
+            }
+            SendSparkMessage(message);
+        });
+
         spark.login({ accessToken: message.token });
         loggedIn = true;
+
     }
     else{
         SendSparkMessage(message);
