@@ -1,8 +1,11 @@
 /**
- * Created by Steven on 20-5-2015.
+ * Created by Steven Houben (s.houben@ucl.ac.uk) - 2015
  */
 
-//Our private keys are stored in a private part of the webserver
+/**
+ * Private keys stored in the private part of the server
+ * @constructor
+ */
 var Keys = function(){
     this.smartCitizenKit1 = {
         token:"a84d28b66e96ebdae9115007d4af2199b226c1fa",

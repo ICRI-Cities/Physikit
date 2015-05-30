@@ -1,17 +1,20 @@
 /**
- * Created by Steven on 14-5-2015.
+ * Created by Steven Houben (s.houben@ucl.ac.uk) - 2015
  */
 
-//Import needed to query the smartcitizen api
+//Import of modules
 var http = require('http');
-
-//So we can send events
 var events = require('events');
 var EventEmitter =  require('events').EventEmitter;
-
 var util = require('util');
 
-//The SmartCitizenKit object
+/**
+ * Smart Citizen kit object
+ * @param id - the id of the users
+ * @param token - the API token of the smart citizen kit
+ * @param deviceId - the device id of the smart citizen kit
+ * @constructor
+ */
 var SmartCitizenKit =  function(id, token, deviceId){
     this.lastpost = undefined;
     this.id = id;
@@ -21,8 +24,11 @@ var SmartCitizenKit =  function(id, token, deviceId){
 
     var self =  this;
 
-    //Uses interval to poll the API
-    setInterval(function () {
+    /**
+     * Polls the Smart citizen kit every "interval" time
+     */
+    setInterval(function PollSmartCitizenKit () {
+
         var url = 'http://api.smartcitizen.me/v0.0.1/'+token +'/'+deviceId +'/posts.json';
 
         //On interval tick, ask Smart Citizen API for data

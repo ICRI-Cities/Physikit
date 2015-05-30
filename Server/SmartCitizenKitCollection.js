@@ -1,19 +1,21 @@
 /**
- * Created by Steven on 20-5-2015.
+ * Created by Steven Houben (s.houben@ucl.ac.uk) - 2015
  */
 
-//Import needed to query the smartcitizen api
+//Import of modules
 var http = require('http');
-
-//So we can send events
 var events = require('events');
 var EventEmitter =  require('events').EventEmitter;
-
 var util = require('util');
-
 
 var SmartCitizenKit = require('./SmartCitizenKit');
 
+/**
+ * Smart Citizen Kit Collection Object that encapsulates
+ * many kits and tunnels events to the main class
+ * @param arrayOfKitKeys -  the array of kits
+ * @constructor
+ */
 var SmartCitizenKitCollection = function(arrayOfKitKeys)
 {
     this.kits = [];

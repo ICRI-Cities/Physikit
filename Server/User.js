@@ -1,8 +1,14 @@
 /**
- * Created by Steven on 18-5-2015.
+ * Created by Steven Houben (s.houben@ucl.ac.uk) - 2015
  */
 
-function User(type,id,lightToken,fanToken,moveToken,buzzToken,sckToken) {
+/**
+ * The user object
+ * @param type - object type "User"
+ * @param id - id of the user
+ * @constructor
+ */
+function User(type,id) {
     this.type = type;
     this.name = "defaultName";
     this.id = id;

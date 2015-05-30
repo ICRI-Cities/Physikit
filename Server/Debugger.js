@@ -1,5 +1,5 @@
 /**
- * Created by Steven Houben (s.houben@ucl.ac.uk)
+ * Created by Steven Houben (s.houben@ucl.ac.uk) - 2015
  */
 
 //Debug purposes
@@ -7,11 +7,8 @@ var moment = require('moment');
 var fs = require('fs');
 
 exports.output = false;
-
 exports.details = false;
-
 exports.disablePhysikitCalls = false;
-
 exports.log = function(text) {
     var msg = moment().format("D MMM HH:mm:ss") + " - " + text
     console.log(msg);
@@ -20,8 +17,6 @@ exports.log = function(text) {
         if (err) console.log("Error writing to file");
     });
 }
-
-
 exports.spacer = function(){
     console.log(moment().format("D MMM HH:mm:ss") + " - " +"---------------------------------------");
 }

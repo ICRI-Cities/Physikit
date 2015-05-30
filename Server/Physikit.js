@@ -1,14 +1,10 @@
 /**
- * Created by Steven Houben on 14-5-2015.
+ * Created by Steven Houben (s.houben@ucl.ac.uk) - 2015
  */
 
-//Include spark API
+//Include modules
 var spark = require('spark');
-
-//So we can send events
 var EventSource = require('eventsource');
-
-//Send events
 var EventEmitter =  require('events').EventEmitter;
 var util = require('util');
 
@@ -16,40 +12,48 @@ var util = require('util');
 var Keys = require('./privateKeys');
 var keys = new Keys();
 
+//Grab the debugger
 var debug = require('./Debugger');
 
 
-//The main object
+/**
+ * Physikit is the class that abstracts the Spark Cores that are
+ * part of the same cube group.
+ * @param id - the id of the Physikit
+ * @param physikitKeys - the device id's and token of the Spark Core account
+ * @constructor
+ */
 var Physikit = function(id,physikitKeys){
 
-    //The user ID
     this.id = id;
-
-    //The Physikit device ids
     this.keys = physikitKeys;
 
-    //This object
     var self =  this;
 
-    //Set the fan
+    /**
+     * These functions abstract the physikit interactions and expose them
+     * through the object
+     * @param mode - value between 0 and 9
+     * @param setting - value between 0 and 9
+     * @param args - value between 0 and 9
+     * @param value - value between 0 and 255
+     * @constructor 
+     */
     this.fan = function SetFanDevice(mode,setting,args,value){
         SetDevice("fan",self.keys.fanDeviceToken,mode,setting,args,value);
         if(debug.details) debug.log("Kit " + self.id+" -> Set fan: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
     };
 
-    //Set the light
     this.light = function SetLightDevice(mode,setting,args,value){
         SetDevice("light",self.keys.lightDeviceToken,mode,setting,args,value);
         if(debug.details) debug.log("Kit " + self.id+" -> Set light: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
     };
 
-    //Set the move
     this.move =  function SetMoveDevice(mode,setting,args,value){
         SetDevice("move",self.keys.moveDeviceToken,mode,setting,args,value);
         if(debug.details) debug.log("Kit " + self.id+" -> Set move: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
     };
 
-    //Set the buzz
     this.buzz = function SetBuzzDevice(mode,setting,args,value){
         SetDevice("buzz",self.keys.buzzDeviceToken,mode,setting,args,value);
         if(debug.details) debug.log("Kit " + self.id+" -> Set buzz: "+ mode + '-' + setting+ '-'  +args + '-'+ value);
@@ -64,8 +68,15 @@ var Physikit = function(id,physikitKeys){
         }
     };
 
-
-    //Generic device function
+    /**
+     * Sends the actual message to the Spark Core
+     * @param name - the name of the cube ("light", "fan",...)
+     * @param token - the access token of the Spark API
+     * @param mode - value between 0 and 9
+     * @param setting - value between 0 and 9
+     * @param args - value between 0 and 9
+     * @param value - value between 0 and 255
+     */
     function SetDevice(name,token, mode, setting,args, value ) {
         spark.getDevice(token, function (err, device) {
                 if(err){
@@ -74,7 +85,7 @@ var Physikit = function(id,physikitKeys){
                 }
 
                 //---------------------------------------
-                //This should never happen, for some reason does happen.
+                //This should never happen, but for some reason does happen.
                 //Perhaps it's a bug in the Spark API
                 if(device==null){
                     debug.log(token);
@@ -82,6 +93,7 @@ var Physikit = function(id,physikitKeys){
                     debug.log(name);
                     return;
                 }
+                //---------------------------------------
 
                 //spark function run("a-b-c") a:mode, b:setting, c:value
                 device.callFunction('run', mode + '-' + setting+ '-'  +args + '-'+ value, function (err, data) {
@@ -92,7 +104,12 @@ var Physikit = function(id,physikitKeys){
             });
     }
 
-    //Set callbacks for each cube. Cubenames: light, buzz, move or fan
+    /**
+     * Sets a callback from the Spark API
+     * @param deviceToken - device Id of the cibe
+     * @param cubeName - name of the cube
+     * @param callback - callback function
+     */
     function SetCallback(deviceToken,cubeName,callback){
         //hook callbacks whenever someone is updating the spark
         var eventSource = new EventSource("https://api.spark.io/v1/devices/"+deviceToken+"/events/?access_token=" + self.keys.token);
