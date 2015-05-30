@@ -46,7 +46,7 @@ app.use(bodyParser.json());
 process.argv.forEach(function(val, index, array) {
     if(val == "-o") debug.output= true;
     if(val == "-od") debug.details = true;
-    if(val == "-phys") debug.disablePhysikitCalls = true;
+    if(val == "-np") debug.disablePhysikitCalls = true;
 
 });
 

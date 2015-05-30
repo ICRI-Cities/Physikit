@@ -153,7 +153,7 @@ function SendMessage(){
 
     //Save the cookie if needed
     if($("#saveCookie").is(':checked')){
-        $.cookie("data",JSON.stringify(message));
+        $.cookie("data",JSON.stringify(message),{ path: '/', expires:7 });
 
         if(!cookieChecked){
             SetInfo("We saved your input data to a cookie",4000);
