@@ -157,14 +157,22 @@ function RunRules(reason,id){
  */
 function RunRule(rule){
 
-    //Update the Physikit with the new rule
-    if(!debug.disablePhysikitCalls)
-        UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,rule.value);
+    //Check if requested cube exist
+    if(PhysikitCubeExist(rule.cube)) {
 
-    //Send update event
-    io.to(rule.id).emit('rule',rule);
+        //Check if request sensor exists
+        if (SmartCitizenSensorExist(rule.smartSensor)) {
 
-    if(debug.details) debug.log("Run rule for " + rule.cube + " on Physikit "+ rule.id);
+            //Update the Physikit with the new rule
+            if(!debug.disablePhysikitCalls)
+                UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,rule.value);
+
+            //Send update event
+            io.to(rule.id).emit('rule',rule);
+
+            if(debug.details) debug.log("Run rule for " + rule.cube + " on Physikit "+ rule.id);
+        }
+    }
 }
 
 
@@ -341,6 +349,27 @@ function UpdatePhysikit(id,cube,mode,setting,args,value){
     });
 }
 
+
+/**
+ * Checks if a cube type exists
+ * @param cubeName - the name of the cube
+ * @returns {boolean} - if the cube type exists
+ */
+function PhysikitCubeExist(cubeName){
+
+    return ["light", "fan", "move","buzz"].indexOf(cubeName) > -1;
+}
+
+/**
+ * Checks if a smart citizen sensor exists
+ * @param sensorName - the name of the sensor
+ * @returns {boolean} - if the sensor exists
+ */
+function SmartCitizenSensorExist(sensorName){
+
+    return ["temp", "hum", "co","no2","light","noise","bat","panel","nets"].indexOf(sensorName) > -1;
+}
+
 /**
  * Adds a new rule to the database
  * @param rule - the new rule
@@ -359,15 +388,11 @@ function AddRule(rule,callback){
         //Check if rule exists for this cube
         FindRule(rule.id,rule.cube,function(ruleResult){
 
-            //These are our defaults
-            var cubes = ["light", "fan", "move","buzz"];
-            var sensors = ["temp", "hum", "co","no2","light","noise","bat","panel","nets"];
-
             //Check if requested cube exist
-            if(cubes.indexOf(rule.cube) > -1){
+            if(PhysikitCubeExist(rule.cube)){
 
                 //Check if request sensor exists
-                if(sensors.indexOf(rule.smartSensor) >-1){
+                if(SmartCitizenSensorExist(rule.smartSensor)){
 
                     //Add new rule or replace if exist
                     ruleResult == undefined ? db.Add("rules",rule):db.Replace("rules",rule,"_id",ruleResult._id);

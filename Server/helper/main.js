@@ -142,13 +142,10 @@ function SendMessage(){
     message.setting = $( "#setting" ).val();
     message.checked = $("#saveCookie").is(':checked');
 
-    var hasError = CheckToken(message.token);
-    hasError = CheckDeviceId(message.deviceId);
 
-
-    hasError = CheckValue(message.value);
-
-    if(hasError)
+    if(CheckToken(message.token)
+        && CheckDeviceId(message.deviceId)
+            && CheckValue(message.value))
         return;
 
     //Save the cookie if needed

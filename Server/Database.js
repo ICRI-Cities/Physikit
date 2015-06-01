@@ -39,6 +39,12 @@ var Database = function(){
  */
 var insertDocument = function(db,collection, entity, callback) {
 
+    if(db == null){
+        if(debug.output)
+            console.log("Database connection lost");
+        return
+    }
+
     db.collection(collection).insertOne( entity, function(err, result) {
 
         if(err)
@@ -68,6 +74,12 @@ var updateDocument  = function(db,collection,newEntity,fieldName,oldEntity, call
     var query = {};
     query[fieldName] = oldEntity;
 
+    if(db == null){
+        if(debug.output)
+            console.log("Database connection lost");
+        return
+    }
+
     db.collection(collection).replaceOne(query,newEntity,function(err, results) {
 
         if(err)
@@ -88,6 +100,12 @@ var updateDocument  = function(db,collection,newEntity,fieldName,oldEntity, call
  * @param callback - the callback function to handle results
  */
 var findDocuments = function(db,collection,callback){
+
+    if(db == null){
+        if(debug.output)
+            console.log("Database connection lost");
+        return
+    }
 
     db.collection(collection).find(function(err, cursor){
 
@@ -122,6 +140,12 @@ var findDocumentsWithId = function(db,collection,fieldName, entity,callback){
 
     var query = {};
     query[fieldName] = entity;
+
+    if(db == null){
+        if(debug.output)
+            console.log("Database connection lost");
+        return
+    }
 
     db.collection(collection).find(query,function(err,cursor){
 
