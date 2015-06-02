@@ -24,6 +24,7 @@ var SmartCitizenKitCollection = require('./SmartCitizenKitCollection');
 //Physikit classes
 var User = require('./User');
 var Rule = require('./Rule');
+var common = require('./public/common');
 
 //Grab the private keys
 var Keys = require('./privateKeys');
@@ -58,7 +59,7 @@ app.post('/api',function(req,res){
     //Internal check if user is in database
     FindUser(req.body.id, function (result) {
         if (result == "") {
-            res.send("405 access denied")
+            res.send("405 access denied");
             return;
         }
 
@@ -69,6 +70,31 @@ app.post('/api',function(req,res){
         //send the generated user specific token as json
         res.json({token: token});
     });
+});
+
+app.post('/api/getConnections', function(req,res){
+    //check if user exists in database
+    FindUser(req.body.id, function(result) {
+        if(result == ""){
+           res.send("405 access denied");
+           return;
+        }
+
+        Find("rules", "id", result[0].id, function(list){
+            res.send(list);
+        });
+    });
+});
+
+app.post('/api/getLoginLocation', function(req,res){
+    //check if user exists in database
+    FindUser(req.body.id, function(result) {
+        if(result == ""){
+            res.send("405 access denied");
+            return;
+        }
+        res.send(result[0].name);
+    })
 });
 
 /**
@@ -198,7 +224,7 @@ function Find(collection,fieldName,entity, callback){
         //if list[0] == null, the array is empty and nothing was found
         //callback nothing or list
         if(list[0] != null && callback != undefined)
-            callback(list[0]);
+            callback(list);
         else if(callback != undefined)
             callback("");
     })
@@ -224,7 +250,7 @@ function FindRule(id,cubeName,callback){
         }
 
         //Grab all the rules from the user
-        db.FindByField("rules","id",result.id.toString(),function(list){
+        db.FindByField("rules","id",result[0].id.toString(),function(list){
             var found = false;
             //Iterate through the list of rules of this users
             list.forEach(function (rule) {
@@ -305,6 +331,13 @@ io.on('connection', function(socket){
         AddRule(data,function(result){});
     });
 
+    //Rule removed in client
+    socket.on('remove', function(data){
+
+        //Remove rule from database
+        RemoveRule(data,function(result){});
+    });
+
     //A client disconnected
     socket.on('disconnect', function() {
 
@@ -326,7 +359,7 @@ io.on('connection', function(socket){
  * @param id - id of user
  * @param cube - name of the cube
  * @param mode - mode value between 0 and 9
- * @param setting- setting value between 0 and 9
+ * @param setting - setting value between 0 and 9
  * @param args - args value between 0 and 9
  * @param value - value between 0 and 255
  */
@@ -342,7 +375,7 @@ function UpdatePhysikit(id,cube,mode,setting,args,value){
         }
 
         //Create new physikit instance based on id
-        var pk = new Physikit(id,result.physikit);
+        var pk = new Physikit(id,result[0].physikit);
 
         //Update the right cube
         pk[cube](mode,setting,args,value);
@@ -356,8 +389,8 @@ function UpdatePhysikit(id,cube,mode,setting,args,value){
  * @returns {boolean} - if the cube type exists
  */
 function PhysikitCubeExist(cubeName){
-
-    return ["light", "fan", "move","buzz"].indexOf(cubeName) > -1;
+    var cube = common.getCubeByName(cubeName);
+    return cube!=undefined;
 }
 
 /**
@@ -366,8 +399,8 @@ function PhysikitCubeExist(cubeName){
  * @returns {boolean} - if the sensor exists
  */
 function SmartCitizenSensorExist(sensorName){
-
-    return ["temp", "hum", "co","no2","light","noise","bat","panel","nets"].indexOf(sensorName) > -1;
+    var sensor = common.getSensorByName(sensorName);
+    return sensor!=undefined;
 }
 
 /**
@@ -430,6 +463,68 @@ function AddRule(rule,callback){
 }
 
 /**
+ * Removes a rule from the database
+ * @param rule - the rule to be removed
+ * @param callback - callback function to handle results
+ * @constructor
+ */
+function RemoveRule(rule,callback){
+    //Check if user exists
+    FindUser(rule.id, function(result) {
+        if (result == "") {
+            res.send("405 access denied");
+            return;
+        }
+
+        //check if requested rule exists for this cube
+        FindRule(rule.id, rule.cube, function (ruleResult) {
+
+            //Check if requested cube exist
+            if(PhysikitCubeExist(rule.cube)){
+
+                //Check if request sensor exists
+                if(SmartCitizenSensorExist(rule.smartSensor)){
+
+                    //Remove rule if exists
+                    if (ruleResult != undefined) {
+                        db.Remove("rules", rule);
+                        console.log("rule removed");
+                    }
+
+                    //Error -> rule did not exist
+                    else {
+                        var data = {};
+                        data.code = 400;
+                        data.error = 'requested rule between sensor type ' + rule.smartSensor
+                            + ' and cube type: ' + rule.cube + ' not found';
+                        data.rule = rule;
+                        if (callback != undefined) callback(data);
+                    }
+                }
+
+                //Error -> sensor type does not exist
+                else {
+                    var data = {};
+                    data.code = 400;
+                    data.error = 'requested sensor type ' + rule.smartSensor + ' not found';
+                    data.rule = rule;
+                    if (callback != undefined) callback(data);
+                }
+            }
+
+            //Error -> cube type does not exist
+            else{
+                var data = {};
+                data.code = 400;
+                data.error = 'requested cube type ' + rule.cube + ' not found';
+                data.rule = rule;
+                if(callback != undefined) callback(data);
+            }
+        });
+    });
+}
+
+/**
  * Webserver listener
  */
 httpApp.listen(process.env.PORT || 3000, function(){
@@ -460,7 +555,7 @@ app.get('/api/:id/rules',function(req,res){
             return;
         }
 
-        db.FindByField("rules","id",result.id,function(list)
+        db.FindByField("rules","id",result[0].id,function(list)
         {
             res.send(list);
         });
@@ -475,6 +570,7 @@ app.get('/api/:id/rules/:smartSensor/:smartId/:cube/:condition/:mode/:setting/:a
         req.params.id,
         req.params.smartId,
         req.params.smartSensor,
+        req.params.sensorLoc,
         req.params.cube,
         req.params.condition,
         req.params.mode,
@@ -503,7 +599,7 @@ app.get('/api/:id/rules/',function(req, res){
             res.send("405 access denied")
             return;
         }
-        db.FindByField("rules","id", result.id, function (list) {
+        db.FindByField("rules","id", result[0].id, function (list) {
             res.send(list);
         });
     });

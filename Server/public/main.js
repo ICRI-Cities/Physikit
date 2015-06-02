@@ -74,7 +74,7 @@ function connect_socket (id,token) {
     //updates send by our app over socket.io
     socket.on('rule',function(rule){
         HandleRuleMessage(rule);
-    })
+    });
 
     //Handles "onconnect" socket.io event
     socket.on("connect",function(msg){
@@ -97,22 +97,37 @@ function connect_socket (id,token) {
 //mode: 0-9
 //setting: 0-9
 //value: 0-9
-function Send(cube,mode,setting,args,value){
+function Send(cube,sensor,sensorLoc,mode,setting,args,value){
     var data =
     {
         type: "rule",
         id : $.cookie("physikit"),
-        smartSensor :  "co",
+        smartSensor :  sensor,
         smartId :$.cookie("physikit"),
+        sensorLoc: sensorLoc,
         cube : cube,
         condition : "constant",
         mode : mode,
         setting : setting,
         args : args,
         value : value
-    }
+    };
     socket.emit('rule',data);
-};
+}
+
+//Send remove message to physikit node app
+//triggered by the removal of a connection on the web UI
+function RemoveRule(sensor,cube){
+    var data =
+    {
+        type: "rule",
+        id : $.cookie("physikit"),
+        smartSensor :  sensor,
+        smartId :$.cookie("physikit"),
+        cube : cube
+    };
+    socket.emit('remove',data);
+}
 
 
 
@@ -133,12 +148,21 @@ function SwitchLogin(value,username){
     if(value){
         $("#loginForm").show();
         $("#loggedInForm").hide();
+        $("#loggedInView").hide();
+        $("#loggedOutView").show();
     }else{
         $("#loginForm").hide();
         $("#loggedInForm").show();
         $("#username").text("You are logged in as: " + username);
         $("#username").prop('disabled', false);
+        $("#loggedOutView").hide();
+        $("#loggedInView").show();
 
+        //assign families to tabs
+        assignTabs();
+
+        //initalise jsPlumb view
+        initialisePlumb();
     }
 }
 
@@ -155,11 +179,37 @@ $(document).ready(function() {
     //Check for cookie todo auto login
     var cookieValue = $.cookie("physikit");
     if(cookieValue == undefined)
-        SwitchLogin(true)
+        SwitchLogin(true);
     else
         Login(url,cookieValue);
 
-    //JQUERY STUFF Initialize accordion
+    //JQUERY STUFF
+    //handle tab changes and update jsPlumb connections
+    $('a[data-toggle="tab"]').on('show.bs.tab', function (e) {
+        var activeRef = $(e.target).attr("href");
+        var activeTab = -1;
+        var tabRefs = ["#myHouse", "#houseA", "#houseB", "#houseC", "#houseD"];
+        for(var i=0; i<tabRefs.length; i++){
+            if(activeRef == tabRefs[i]){
+                activeTab = i;
+                break;
+            }
+        }
+        refreshConnectionView(activeTab);
+    });
+
+    //initialise sliders when modal shown
+    $('#settingModal').on('shown.bs.modal', function (e) {
+
+        //initialise slider
+        $('#alertSlider').slider({
+            formatter: function (value) {
+                $('input:hidden[name=sliderVal]').val(value);
+            }
+        });
+    });
+
+    //Initialize accordion
     $("#accordion").accordion({
         header: "h3"
     });
@@ -180,7 +230,8 @@ function HandleSmartCitizenMessage(id,data){
     //Todo put them in separate containers
         console.log(data.device.last_insert_datetime);
         $("#sc").html(
-            "You are currently connected to a device named "
+            "<strong><span style='color: #00ff00'>Connected</span></strong>"
+            /*"You are currently connected to a device named "
             + data.device.title
             + " that is located in "
             + data.device.location
@@ -189,7 +240,8 @@ function HandleSmartCitizenMessage(id,data){
             + data.device.location
             + "</span></strong> is currently "
             + data.device.posts[0].temp + " and the co level is "
-            + data.device.posts[0].co + ".");
+            + data.device.posts[0].co + "."*/
+            );
 }
 
 //Handles Physikit Messages
@@ -245,7 +297,7 @@ function HandleMainSwitch(cube,state,sendmessage){
         $('#'+cube+'Slider').slider('value', value);
         $('#'+cube+'SliderValue').text(value);
     }
-};
+}
 
 //Handle interval switch for kit
 function HandleSecondarySwitch(cube,state,sendmessage){
@@ -326,4 +378,85 @@ function HandleSwitchEvent(cube,sendmessage){
             $('#'+cube+'SliderValue').text(ui.value);
         }
     });
+}
+
+//after login complete - initalise jsPlumb connections
+//get rules from database
+function getExistingConnections(callback){
+    //Check for cookie todo auto login
+    var cookieValue = $.cookie("physikit");
+    if(cookieValue != undefined){
+
+        var data = {};
+        data.id = cookieValue;
+
+        $.ajax({
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            url: url+"getConnections/",
+            success: function(connectionList) {
+                callback(connectionList);
+            }
+        });
+    }
+}
+
+//assign location names (families) to tabs based on who has logged in
+function assignTabs(){
+    var cookieValue = $.cookie("physikit");
+    if(cookieValue != undefined) {
+
+        var data = {};
+        data.id = cookieValue;
+
+        //get location names
+        $.ajax({
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            url: url+"getLoginLocation/",  //(family name)
+            success: function(location) {
+
+                var locations = window.common.locations();
+                var locIndex = window.common.getLocationIndex(location);
+
+                //do this statically to ensure consistency
+                switch(locIndex){
+                    case 0: $("#tab-one").val(locations[0].locName);  //set location name in tab hidden input
+                        $("#tab-two").val(locations[1].locName);
+                        $("#tab-three").val(locations[2].locName);
+                        $("#tab-four").val(locations[3].locName);
+                        $("#tab-five").val(locations[4].locName);
+                        break;
+                    case 1: $("#tab-one").val(locations[1].locName);
+                        $("#tab-two").val(locations[0].locName);
+                        $("#tab-three").val(locations[2].locName);
+                        $("#tab-four").val(locations[3].locName);
+                        $("#tab-five").val(locations[4].locName);
+                        break;
+                    case 2: $("#tab-one").val(locations[2].locName);
+                        $("#tab-two").val(locations[0].locName);
+                        $("#tab-three").val(locations[1].locName);
+                        $("#tab-four").val(locations[3].locName);
+                        $("#tab-five").val(locations[4].locName);
+                        break;
+                    case 3: $("#tab-one").val(locations[3].locName);
+                        $("#tab-two").val(locations[0].locName);
+                        $("#tab-three").val(locations[1].locName);
+                        $("#tab-four").val(locations[2].locName);
+                        $("#tab-five").val(locations[4].locName);
+                        break;
+                    case 4: $("#tab-one").val(locations[4].locName);
+                        $("#tab-two").val(locations[0].locName);
+                        $("#tab-three").val(locations[1].locName);
+                        $("#tab-four").val(locations[2].locName);
+                        $("#tab-five").val(locations[3].locName);
+                        break;
+                    default: console.log("tabs not assigned!");
+                        return;
+                }
+            }
+        });
+    }
 }
