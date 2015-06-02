@@ -24,6 +24,7 @@ var self;
  */
 var Database = function(){
     this.Add = add;
+    this.Remove = remove;
     this.FindAll = findAll;
     this.FindByField = findAllbyField;
     this.Replace= replace;
@@ -55,6 +56,34 @@ var insertDocument = function(db,collection, entity, callback) {
             debug.log("Inserted " + JSON.stringify(entity) +" into " + collection);
 
         self.emit("inserted",collection, entity);
+
+        if(callback != undefined) callback(result);
+    });
+};
+
+/**
+ * Removes document from the database
+ * @param db - name of the database
+ * @param collection - name of the collection
+ * @param entity - the entity we want to insert into the database
+ * @param callback - the callback function to handle results
+ */
+var removeDocument = function(db, collection, entity, callback) {
+
+    if(db == null){
+        if(debug.output)
+            console.log("Database connection lost");
+        return
+    }
+
+    db.collection(collection).remove( entity, function(err, result) {
+
+        if(err)
+            if(debug.output)
+                console.log("Failed to remove "+ JSON.stringify(entity) +" from "+ collection);
+
+        if(debug.output)
+            debug.log("Removed " +JSON.stringify(entity) +" from "+ collection);
 
         if(callback != undefined) callback(result);
     });
@@ -168,7 +197,7 @@ var findDocumentsWithId = function(db,collection,fieldName, entity,callback){
         });
     });
 
-}
+};
 
 
 /**
@@ -190,7 +219,7 @@ var replace = function(collection,newEntity,fieldName,oldEntity){
             db.close();
         });
     });
-}
+};
 
 /**
  * Opens database connection and adds an entity to the database
@@ -209,7 +238,24 @@ var add = function(collection,entity){
             db.close();
         });
     });
-}
+};
+
+/**
+ * Opens database connection and removes an entity from the database
+ * @param collection - the name of the collection
+ * @param entity - the entity
+ */
+var remove = function(collection,entity){
+    mongoClient.connect(keys.databaseUrl, function(err, db){
+        if (err)
+            if(debug.output)
+                console.log("Failed to connect to DB: " +err);
+
+        removeDocument(db, collection, entity, function() {
+            db.close();
+        });
+    });
+};
 
 /**
  * Opens a database connection and searches for entities with id
