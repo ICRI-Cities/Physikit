@@ -19,6 +19,11 @@ var jwt = require('jsonwebtoken');
 //Physikit objects
 var Physikit = require('./Physikit')
 var Database = require('./Database');
+/**
+ * Database handle
+ */
+var db = new Database();
+
 var SmartCitizenKitCollection = require('./SmartCitizenKitCollection');
 
 //Physikit classes
@@ -105,20 +110,15 @@ var kit = new SmartCitizenKitCollection([keys.smartCitizenKit1,keys.smartCitizen
 //When new data is received
 kit.on('DataReceived', function(id,data) {
 
-    if(debug.output)  debug.log("Smart Citizen Kit "+ id + " received data on "+ data.device.last_insert_datetime);
+    if(debug.output)
+        debug.log("Smart Citizen Kit "+ id + " received data on "+ data.device.last_insert_datetime,"Smart Citizen Controller","Danger");
 
     //Send the data to all clients
     io.emit('smartcitizen',id,data);
 
     //Since we have new data, we need to run all rules
-    RunRules("Smartcitizen kit "+id+" reported new data.");
+    RunRules("Smart Citizen kit "+id+" reported new data.");
 });
-
-
-/**
- * Database handle
- */
-var db = new Database();
 
 
 /**
@@ -132,7 +132,8 @@ function RunRules(reason,id){
     if(debug.details) debug.spacer();
 
     //Print reason for update
-    if(debug.output) debug.log("Run rules -> "+reason);
+    if(debug.output)
+        debug.log("Run rules -> "+reason,"Physikit Server");
 
     //if value is undefined
     if(id == undefined) {
@@ -196,7 +197,8 @@ function RunRule(rule){
             //Send update event
             io.to(rule.id).emit('rule',rule);
 
-            if(debug.details) debug.log("Run rule for " + rule.cube + " on Physikit "+ rule.id);
+            if(debug.details)
+                debug.log("Run rule for " + rule.cube + " on Physikit "+ rule.id,"Physikit Server");
         }
     }
 }
@@ -303,7 +305,8 @@ io.on('connection', function(socket){
         }
 
         //User found
-        if(debug.output)  debug.log('Client connect with id: ' + socket.client.request._query.id);
+        if(debug.output)
+            debug.log('Client connect with id: ' + socket.client.request._query.id,"Physikit Server");
 
         //Put socket into a separate channel for that id, so we don't do cross-talk across
         //several groups of clients
@@ -342,7 +345,8 @@ io.on('connection', function(socket){
     socket.on('disconnect', function() {
 
         // We don't really need to do anything here
-        if(debug.output)  debug.log('Client disconnect with id: ', socket.client.request._query.id);
+        if(debug.output)
+            debug.log('Client disconnect with id: ', socket.client.request._query.id,"Physikit Server");
     });
 
     //The client send a message for the Physikit
@@ -370,12 +374,19 @@ function UpdatePhysikit(id,cube,mode,setting,args,value){
 
         //No user found, stop function
         if (result == "") {
-            if(debug.output) debug.log("405 access denied");
+            if(debug.output)
+                debug.log("405 access denied","Physikit Server");
             return;
         }
 
         //Create new physikit instance based on id
         var pk = new Physikit(id,result[0].physikit);
+
+        if(typeof pk[cube] != "function"){
+            if(debug.output)
+                debug.log(cube + " is not a physikit function","Physikit Server");
+            return;
+        }
 
         //Update the right cube
         pk[cube](mode,setting,args,value);
@@ -488,7 +499,6 @@ function RemoveRule(rule,callback){
                     //Remove rule if exists
                     if (ruleResult != undefined) {
                         db.Remove("rules", rule);
-                        console.log("rule removed");
                     }
 
                     //Error -> rule did not exist
@@ -528,7 +538,8 @@ function RemoveRule(rule,callback){
  * Webserver listener
  */
 httpApp.listen(process.env.PORT || 3000, function(){
-    if(debug.output) debug.log('server running on *:3000');
+    if(debug.output)
+        debug.log('server running on *:3000',"Physikit Server","Success");
 
     RunRules("Server started");
 });
@@ -570,7 +581,6 @@ app.get('/api/:id/rules/:smartSensor/:smartId/:cube/:condition/:mode/:setting/:a
         req.params.id,
         req.params.smartId,
         req.params.smartSensor,
-        req.params.sensorLoc,
         req.params.cube,
         req.params.condition,
         req.params.mode,
