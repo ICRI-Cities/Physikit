@@ -4,9 +4,6 @@
 
 //Imports of modules
 var mongoClient = require('mongodb').MongoClient;
-var EventEmitter =  require('events').EventEmitter;
-var util = require('util');
-
 
 //Grab the private keys
 var Keys = require('./privateKeys');
@@ -15,21 +12,47 @@ var keys = new Keys();
 //Grab the debugger
 var debug = require('./Debugger');
 
-//Self reference
-var self;
 
 /**
- * Database handle
+ * Check if a field is null, empty or undefined
+ * @param field - the field that needs to be checked
+ * @returns {boolean} - whether the field exists
  * @constructor
  */
-var Database = function(){
-    this.Add = add;
-    this.Remove = remove;
-    this.FindAll = findAll;
-    this.FindByField = findAllbyField;
-    this.Replace= replace;
-    self =  this;
-};
+function IsNull(field){
+    return field == null || field == undefined || field == "";
+}
+
+/**
+ * Validates a database call
+ * @param db - the database
+ * @param collection - the collection
+ * @param entity -  the entity
+ * @returns {boolean} - whether the call was validated
+ * @constructor
+ */
+function ValidateDatabaseCall(db,collection,entity){
+    if(IsNull(db)){
+        if(debug.output)
+            console.log("Database connection lost","Database","Error");
+        return false;
+    }
+
+    else if(IsNull(collection)){
+        if(debug.output)
+            console.log("No Collection was defined","Database","Error");
+        return false;
+    }
+
+    else if(IsNull(entity)){
+        if(debug.output)
+            console.log("No entity was defined","Database","Error");
+        return false;
+    }
+
+    return true;
+}
+
 
 /**
  * Inserts a new document into the database
@@ -38,26 +61,22 @@ var Database = function(){
  * @param entity - the entity we want to insert into the database
  * @param callback - the callback function to handle results
  */
-var insertDocument = function(db,collection, entity, callback) {
+var insertDocument = function (db,collection, entity, callback) {
 
-    if(db == null){
-        if(debug.output)
-            console.log("Database connection lost");
-        return
-    }
+    if(!ValidateDatabaseCall(db,collection,entity))
+        return;
 
     db.collection(collection).insertOne( entity, function(err, result) {
 
         if(err)
             if(debug.output)
-                console.log("Failed to insert "+ JSON.stringify(entity) +" into " + collection);
+                console.log("Failed to insert "+ JSON.stringify(entity) +" into " + collection,"Database","Error");
 
         if(debug.output)
-            debug.log("Inserted " + JSON.stringify(entity) +" into " + collection);
+            debug.log("Inserted " + JSON.stringify(entity) +" into " + collection,"Database","Success");
 
-        self.emit("inserted",collection, entity);
-
-        if(callback != undefined) callback(result);
+        if(callback != undefined)
+            callback(result);
     });
 };
 
@@ -70,22 +89,20 @@ var insertDocument = function(db,collection, entity, callback) {
  */
 var removeDocument = function(db, collection, entity, callback) {
 
-    if(db == null){
-        if(debug.output)
-            console.log("Database connection lost");
-        return
-    }
+    if(!ValidateDatabaseCall(db,collection,entity))
+        return;
 
     db.collection(collection).remove( entity, function(err, result) {
 
         if(err)
             if(debug.output)
-                console.log("Failed to remove "+ JSON.stringify(entity) +" from "+ collection);
+                console.log("Failed to remove "+ JSON.stringify(entity) +" from "+ collection,"Database","Error");
 
         if(debug.output)
-            debug.log("Removed " +JSON.stringify(entity) +" from "+ collection);
+            debug.log("Removed " +JSON.stringify(entity) +" from "+ collection,"Database","Success");
 
-        if(callback != undefined) callback(result);
+        if(callback != undefined)
+            callback(result);
     });
 };
 
@@ -100,25 +117,23 @@ var removeDocument = function(db, collection, entity, callback) {
  */
 var updateDocument  = function(db,collection,newEntity,fieldName,oldEntity, callback){
 
+    if(!ValidateDatabaseCall(db,collection,newEntity))
+        return;
+
     var query = {};
     query[fieldName] = oldEntity;
-
-    if(db == null){
-        if(debug.output)
-            console.log("Database connection lost");
-        return
-    }
 
     db.collection(collection).replaceOne(query,newEntity,function(err, results) {
 
         if(err)
             if(debug.output)
-                console.log("Failed to replace and put "+ JSON.stringify(entity) +" into " + collection);
+                console.log("Failed to replace and put "+ JSON.stringify(entity) +" into " + collection,"Database","Error");
 
             if(debug.output)
-                debug.log("Replace and put " + JSON.stringify(newEntity) +" into " + collection);
+                debug.log("Replace and put " + JSON.stringify(newEntity) +" into " + collection,"Database","Success");
 
-            if(callback != undefined) callback();
+            if(callback != undefined)
+                callback();
         });
 };
 
@@ -130,24 +145,21 @@ var updateDocument  = function(db,collection,newEntity,fieldName,oldEntity, call
  */
 var findDocuments = function(db,collection,callback){
 
-    if(db == null){
-        if(debug.output)
-            console.log("Database connection lost");
-        return
-    }
+    if(!ValidateDatabaseCall(db,collection,"noEntity"))
+        return;
 
     db.collection(collection).find(function(err, cursor){
 
         if(err)
             if(debug.output)
-                console.log("Collection not found: " +err);
+                console.log("Collection not found: " +err,"Database","Error");
 
         var list = [];
 
         cursor.each(function(err, doc) {
 
             if(err)
-                if(debug.output) console.log("Error trying to find documents: " +err);
+                if(debug.output) console.log("Error trying to find documents: " +err,"Database","Error");
 
             if (doc != null)
                 list.push(doc);
@@ -167,20 +179,18 @@ var findDocuments = function(db,collection,callback){
  */
 var findDocumentsWithId = function(db,collection,fieldName, entity,callback){
 
+    if(!ValidateDatabaseCall(db,collection,entity))
+        return;
+
     var query = {};
     query[fieldName] = entity;
 
-    if(db == null){
-        if(debug.output)
-            console.log("Database connection lost");
-        return
-    }
 
     db.collection(collection).find(query,function(err,cursor){
 
         if(err)
             if(debug.output)
-                console.log("Collection not found: " +err);
+                console.log("Collection not found: " +err,"Database","Error");
 
         var list = [];
 
@@ -188,7 +198,7 @@ var findDocumentsWithId = function(db,collection,fieldName, entity,callback){
 
             if(err)
                 if(debug.output)
-                    console.log("Error trying to find documents: " +err);
+                    console.log("Error trying to find documents: " +err,"Database","Error");
 
             if (doc != null)
                 list.push(doc);
@@ -201,19 +211,29 @@ var findDocumentsWithId = function(db,collection,fieldName, entity,callback){
 
 
 /**
+ * Database handle
+ * @constructor
+ */
+var Database = function(){
+
+};
+
+
+
+/**
  * Opens database connection and  replaces an entity in the database
  * @param collection -  the name of the collection
  * @param newEntity -  the entity
  * @param fieldName - the name of field
  * @param oldEntity -  the entity we will replace
  */
-var replace = function(collection,newEntity,fieldName,oldEntity){
+Database.prototype.Replace = function(collection,newEntity,fieldName,oldEntity){
 
     mongoClient.connect(keys.databaseUrl, function(err, db) {
 
         if(err)
             if(debug.output)
-                console.log("Failed to connect to DB: " +err);
+                console.log("Failed to connect to DB: " +err,"Database","Error");
 
         updateDocument(db, collection,newEntity,fieldName,oldEntity, function() {
             db.close();
@@ -226,13 +246,13 @@ var replace = function(collection,newEntity,fieldName,oldEntity){
  * @param collection - the name of the collection
  * @param entity - the entity
  */
-var add = function(collection,entity){
+Database.prototype.Add = function(collection,entity){
 
     mongoClient.connect(keys.databaseUrl, function(err, db) {
 
         if(err)
             if(debug.output)
-                console.log("Failed to connect to DB: " +err);
+                console.log("Failed to connect to DB: " +err,"Database","Error");
 
         insertDocument(db, collection,entity, function() {
             db.close();
@@ -245,11 +265,11 @@ var add = function(collection,entity){
  * @param collection - the name of the collection
  * @param entity - the entity
  */
-var remove = function(collection,entity){
+Database.prototype.Remove = function(collection,entity){
     mongoClient.connect(keys.databaseUrl, function(err, db){
         if (err)
             if(debug.output)
-                console.log("Failed to connect to DB: " +err);
+                console.log("Failed to connect to DB: " +err,"Database","Error");
 
         removeDocument(db, collection, entity, function() {
             db.close();
@@ -264,13 +284,13 @@ var remove = function(collection,entity){
  * @param entity - the entity we want to add
  * @param callback - the callback function to handle results
  */
-var findAllbyField = function(collection,fieldName, entity, callback) {
+Database.prototype.FindByField = function(collection,fieldName, entity, callback) {
 
     mongoClient.connect(keys.databaseUrl, function(err, db) {
 
         if(err)
             if(debug.output)
-                console.log("Failed to connect to DB: " +err);
+                console.log("Failed to connect to DB: " +err,"Database","Error");
 
         findDocumentsWithId(db,collection,fieldName,entity,function(list) {
             db.close();
@@ -286,13 +306,13 @@ var findAllbyField = function(collection,fieldName, entity, callback) {
  * @param collection - the name of the collection
  * @param callback - the callback function to handle results
  */
-var findAll = function(collection,callback) {
+Database.prototype.FindAll = function(collection,callback) {
 
     mongoClient.connect(keys.databaseUrl, function(err, db) {
 
         if(err)
             if(debug.output)
-                console.log("Failed to connect to DB: " +err);
+                console.log("Failed to connect to DB: " +err,"Database","Error");
 
         findDocuments(db,collection,function(list) {
             db.close();
@@ -303,8 +323,6 @@ var findAll = function(collection,callback) {
     });
 };
 
-//So we can send event
-util.inherits(Database, EventEmitter);
 
 //Export our database object
 module.exports = Database;
