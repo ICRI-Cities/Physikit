@@ -190,9 +190,15 @@ function RunRule(rule){
         //Check if request sensor exists
         if (SmartCitizenSensorExist(rule.smartSensor)) {
 
+
+            //Todo -----------------------------------
+            //Todo: check condition and run rule
+            //Todo -----------------------------------
             //Update the Physikit with the new rule
             if(!debug.disablePhysikitCalls)
                 UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,rule.value);
+
+            //Todo-----------------------------------
 
             //Send update event
             io.to(rule.id).emit('rule',rule);
