@@ -11,6 +11,13 @@ ul.nav li.dropdown:hover ul.dropdown-menu {
    display: block;
 }
 
+#tab-background{
+   background-image: url(../ui/images/backgroundA.png);
+   background-repeat: no-repeat;
+   height:470px;
+   width:400px;"
+}
+
 
 
 

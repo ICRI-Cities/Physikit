@@ -158,10 +158,13 @@ function SwitchLogin(value,username){
         $("#loggedOutView").hide();
         $("#loggedInView").show();
 
-        //assign families to tabs
+        //assign families to tabs based on logged in user
         assignTabs();
 
-        //initalise jsPlumb view
+        //initialise content in popovers depending on existing rules for logged in user
+        initialisePopContent();
+
+        //initalise jsPlumb view depending on logged in user
         initialisePlumb();
     }
 }
@@ -184,23 +187,18 @@ $(document).ready(function() {
         Login(url,cookieValue);
 
     //JQUERY STUFF
-    //handle tab changes and update jsPlumb connections
+
+    //initialise popovers
+    $('[data-toggle="popover"]').popover({ html : true });
+
+    //handle tab changes
     $('a[data-toggle="tab"]').on('show.bs.tab', function (e) {
         var activeRef = $(e.target).attr("href");
-        var activeTab = -1;
-        var tabRefs = ["#myHouse", "#houseA", "#houseB", "#houseC", "#houseD"];
-        for(var i=0; i<tabRefs.length; i++){
-            if(activeRef == tabRefs[i]){
-                activeTab = i;
-                break;
-            }
-        }
-        refreshConnectionView(activeTab);
+        tabChange(activeRef);
     });
 
     //initialise sliders when modal shown
     $('#settingModal').on('shown.bs.modal', function (e) {
-
         //initialise slider
         $('#alertSlider').slider({
             formatter: function (value) {
@@ -266,6 +264,7 @@ function HandleRuleMessage(rule){
         HandleSecondarySwitch(rule.cube,checkState,false);
     }
 }
+
 
 //Handle UI switches to control Kit
 function HandleMainSwitch(cube,state,sendmessage){
@@ -380,6 +379,39 @@ function HandleSwitchEvent(cube,sendmessage){
     });
 }
 
+//update tabs and jsplumb connections
+//when tab change occurs
+function tabChange(activeRef){
+    var locationName = "";
+    var activeTab = -1;
+
+    if(activeRef == "#tabOne"){
+        locationName = $("#tab-one").val();
+        activeTab = 0;
+    }else if(activeRef == "#tabTwo"){
+        locationName = $("#tab-two").val();
+        activeTab = 1;
+    }else if(activeRef == "#tabThree"){
+        locationName = $("#tab-three").val();
+        activeTab = 2;
+    }else if(activeRef == "#tabFour"){
+        locationName = $("#tab-four").val();
+        activeTab = 3;
+    }else if(activeRef == "#tabFive"){
+        locationName = $("#tab-five").val();
+        activeTab = 4;
+    }
+
+    //set tab background
+    var url = window.common.getLocationByName(locationName).background;
+    $("#tab-background").css("background-image", "url("+url+")");
+
+    //update jsPlumb connections
+    refreshConnectionView(activeTab);
+}
+
+
+
 //after login complete - initalise jsPlumb connections
 //get rules from database
 function getExistingConnections(callback){
@@ -423,35 +455,60 @@ function assignTabs(){
 
                 //do this statically to ensure consistency
                 switch(locIndex){
-                    case 0: $("#tab-one").val(locations[0].locName);  //set location name in tab hidden input
-                        $("#tab-two").val(locations[1].locName);
-                        $("#tab-three").val(locations[2].locName);
-                        $("#tab-four").val(locations[3].locName);
-                        $("#tab-five").val(locations[4].locName);
+                    case 0: $("#tab-one").val(locations[0].name);  //set location name in tab hidden input
+                        $("#tab-two").val(locations[1].name);
+                        $("#tab-three").val(locations[2].name);
+                        $("#tab-four").val(locations[3].name);
+                        $("#tab-five").val(locations[4].name);
+                        $("#tab1-label").html(locations[0].label); //set labels on tabs
+                        $("#tab2-label").html(locations[1].label);
+                        $("#tab3-label").html(locations[2].label);
+                        $("#tab4-label").html(locations[3].label);
+                        $("#tab5-label").html(locations[4].label);
                         break;
-                    case 1: $("#tab-one").val(locations[1].locName);
-                        $("#tab-two").val(locations[0].locName);
-                        $("#tab-three").val(locations[2].locName);
-                        $("#tab-four").val(locations[3].locName);
-                        $("#tab-five").val(locations[4].locName);
+                    case 1: $("#tab-one").val(locations[1].name);
+                        $("#tab-two").val(locations[0].name);
+                        $("#tab-three").val(locations[2].name);
+                        $("#tab-four").val(locations[3].name);
+                        $("#tab-five").val(locations[4].name);
+                        $("#tab1-label").html(locations[1].label);
+                        $("#tab2-label").html(locations[0].label);
+                        $("#tab3-label").html(locations[2].label);
+                        $("#tab4-label").html(locations[3].label);
+                        $("#tab5-label").html(locations[4].label);
                         break;
-                    case 2: $("#tab-one").val(locations[2].locName);
-                        $("#tab-two").val(locations[0].locName);
-                        $("#tab-three").val(locations[1].locName);
-                        $("#tab-four").val(locations[3].locName);
-                        $("#tab-five").val(locations[4].locName);
+                    case 2: $("#tab-one").val(locations[2].name);
+                        $("#tab-two").val(locations[0].name);
+                        $("#tab-three").val(locations[1].name);
+                        $("#tab-four").val(locations[3].name);
+                        $("#tab-five").val(locations[4].name);
+                        $("#tab1-label").html(locations[2].label);
+                        $("#tab2-label").html(locations[0].label);
+                        $("#tab3-label").html(locations[1].label);
+                        $("#tab4-label").html(locations[3].label);
+                        $("#tab5-label").html(locations[4].label);
                         break;
-                    case 3: $("#tab-one").val(locations[3].locName);
-                        $("#tab-two").val(locations[0].locName);
-                        $("#tab-three").val(locations[1].locName);
-                        $("#tab-four").val(locations[2].locName);
-                        $("#tab-five").val(locations[4].locName);
+                    case 3: $("#tab-one").val(locations[3].name);
+                        $("#tab-two").val(locations[0].name);
+                        $("#tab-three").val(locations[1].name);
+                        $("#tab-four").val(locations[2].name);
+                        $("#tab-five").val(locations[4].name);
+                        $("#tab1-label").html(locations[3].label);
+                        $("#tab2-label").html(locations[0].label);
+                        $("#tab3-label").html(locations[1].label);
+                        $("#tab4-label").html(locations[2].label);
+                        $("#tab5-label").html(locations[4].label);
                         break;
-                    case 4: $("#tab-one").val(locations[4].locName);
-                        $("#tab-two").val(locations[0].locName);
-                        $("#tab-three").val(locations[1].locName);
-                        $("#tab-four").val(locations[2].locName);
-                        $("#tab-five").val(locations[3].locName);
+                    case 4: $("#tab-one").val(locations[4].name);
+                        $("#tab-two").val(locations[0].name);
+                        $("#tab-three").val(locations[1].name);
+                        $("#tab-four").val(locations[2].name);
+                        $("#tab-five").val(locations[3].name);
+                        $("#tab1-label").html(locations[4].label);
+                        $("#tab2-label").html(locations[0].label);
+                        $("#tab3-label").html(locations[1].label);
+                        $("#tab4-label").html(locations[2].label);
+                        $("#tab5-label").html(locations[3].label);
                         break;
                     default: console.log("tabs not assigned!");
                         return;
@@ -460,3 +517,93 @@ function assignTabs(){
         });
     }
 }
+
+function initialisePopContent(){
+    var cookieValue = $.cookie("physikit");
+    if(cookieValue != undefined) {
+
+        //get existing rules for this user
+        getExistingConnections(function(connectionList){
+            for(var i=0; i<connectionList.length; i++) {
+                var nextConnection = connectionList[i];
+
+                var cubeName = nextConnection.cube;
+                var sensorName = nextConnection.smartSensor;
+                var locationName = nextConnection.sensorLoc;
+
+                if (cubeName != undefined) {
+                    if (sensorName != undefined) {
+                        if (locationName != undefined) {
+
+                            var mode = nextConnection.mode;
+                            var setting = nextConnection.setting;
+                            var arg = nextConnection.args;
+
+                            updatePopContent(cubeName, sensorName, locationName, mode, setting, arg);
+
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+function resetPopContent(cubeName){
+    if (cubeName == "fan") {
+        $("#pk-fan").attr('data-content', "Not connected to any sensor");
+    } else if (cubeName == "light") {
+        $("#pk-led").attr('data-content', "Not connected to any sensor");
+    } else if (cubeName == "move") {
+        $("#pk-motion").attr('data-content', "Not connected to any sensor");
+    } else if (cubeName == "buzz") {
+        $("#pk-vibro").attr('data-content', "Not connected to any sensor");
+    }
+}
+
+function updatePopContent(cubeName, sensorName, locationName, mode, setting, arg){
+
+    var cubeLabel = window.common.getCubeByName(cubeName).label;
+    var sensorLabel = window.common.getSensorByName(sensorName).label;
+    var locationLabel = window.common.getLocationByName(locationName).label;
+
+    //set sensor and cube labels in dataModel
+    loadDataModel(sensorLabel, cubeLabel);
+
+    //get text for popover
+    var cubeIndex = window.common.getCubeIndexByName(cubeName);
+    var modeText = getModeData(cubeIndex, mode).modeText;
+    var settingText = getSettingData(cubeIndex, mode, setting).settingText;
+    //check if there is any arg text
+    var argText = "";
+    var settingArgs = getSettingData(cubeIndex, mode, setting).settingArgs;
+    if (settingArgs.length > 0) {
+        argText = getArgData(cubeIndex, mode, setting, arg).argText;
+    }
+
+    var popText = "<div>Connected to: <strong>" + sensorLabel + " sensor </strong><br>"
+        + "From: <strong>" + locationLabel + "</strong><br><br>";
+    if (modeText != undefined) {
+        popText = popText + cubeLabel + " cube will: <br>" + modeText + ". ";
+    }
+    if (settingText != undefined) {
+        popText = popText + settingText +". ";
+    }
+    if (argText != "") {
+        popText = popText + argText +".";
+    }
+    popText = popText+"</div>";
+
+    //set text in popover
+    if (cubeName == "fan") {
+        $("#pk-fan").attr('data-content', popText);
+    } else if (cubeName == "light") {
+        $("#pk-led").attr('data-content', popText);
+    } else if (cubeName == "move") {
+        $("#pk-motion").attr('data-content', popText);
+    } else if (cubeName == "buzz") {
+        $("#pk-vibro").attr('data-content', popText);
+    }
+}
+
+

@@ -72,18 +72,18 @@
                     <tr>
                         <td width="400">
                             <ul class="nav nav-tabs">
-                                <li class="active" role="presentation"><a data-toggle="tab" href="#myHouse">My House</a></li>
-                                <li role="presentation"><a data-toggle="tab" href="#houseA">House A</a></li>
-                                <li role="presentation"><a data-toggle="tab" href="#houseB">House B</a></li>
-                                <li role="presentation"><a data-toggle="tab" href="#houseC">House C</a></li>
-                                <li role="presentation"><a data-toggle="tab" href="#houseD">House D</a></li>
+                                <li class="active" role="presentation"><a id="tab1-label" data-toggle="tab" href="#tabOne"></a></li>
+                                <li role="presentation"><a id="tab2-label" data-toggle="tab" href="#tabTwo"></a></li>
+                                <li role="presentation"><a id="tab3-label" data-toggle="tab" href="#tabThree"></a></li>
+                                <li role="presentation"><a id="tab4-label" data-toggle="tab" href="#tabFour"></a></li>
+                                <li role="presentation"><a id="tab5-label" data-toggle="tab" href="#tabFive"></a></li>
                             </ul>
                         </td>
                     </tr>
                     <tr>
                         <td width="400">
                             <div class="tab-content">
-                                <div id="myHouse" class="tab-pane fade in active">
+                                <div id="tabOne" class="tab-pane fade in active">
                                     <input id="tab-one" type="hidden" value="">
                                     <h2>My SmartCitizen Kit</h2>
                                     <p id="sc">
@@ -91,7 +91,7 @@
                                     </p>
                                 </div>
 
-                                <div id="houseA" class="tab-pane fade">
+                                <div id="tabTwo" class="tab-pane fade">
                                     <input id="tab-two" type="hidden" value="">
                                     <h2>House A: SmartCitizen Kit</h2>
                                     <p id="scA">
@@ -99,7 +99,7 @@
                                     </p>
                                 </div>
 
-                                <div id="houseB" class="tab-pane fade">
+                                <div id="tabThree" class="tab-pane fade">
                                     <input id="tab-three" type="hidden" value="">
                                     <h2>House B: SmartCitizen Kit</h2>
                                     <p id="scB">
@@ -107,7 +107,7 @@
                                     </p>
                                 </div>
 
-                                <div id="houseC" class="tab-pane fade">
+                                <div id="tabFour" class="tab-pane fade">
                                     <input id="tab-four" type="hidden" value="">
                                     <h2>House C: SmartCitizen Kit</h2>
                                     <p id="scC">
@@ -115,7 +115,7 @@
                                     </p>
                                 </div>
 
-                                <div id="houseD" class="tab-pane fade">
+                                <div id="tabFive" class="tab-pane fade">
                                     <input id="tab-five" type="hidden" value="">
                                     <h2>House D: SmartCitizen Kit</h2>
                                     <p id="scD">
@@ -133,17 +133,21 @@
                     </tr>
                 </table>
 
-                <div class="window" id="sc-co"><strong>CO</strong><br/><br/></div>
-                <div class="window" id="sc-hum"><strong>Humidity</strong><br/><br/></div>
-                <div class="window" id="sc-light"><strong>Light</strong><br/><br/></div>
-                <div class="window" id="sc-no2"><strong>NO2</strong><br/><br/></div>
-                <div class="window" id="sc-noise"><strong>Noise</strong><br/><br/></div>
-                <div class="window" id="sc-temp"><strong>Temperature</strong><br/><br/></div>
+                <div id="tab-background">
 
-                <div class="window" id="pk-fan"><strong>Fan</strong><br/><br/></div>
-                <div class="window" id="pk-led"><strong>Lights</strong><br/><br/></div>
-                <div class="window" id="pk-vibro"><strong>Vibration</strong><br/><br/></div>
-                <div class="window" id="pk-motion"><strong>Movement</strong><br/><br/></div>
+                    <div class="window" id="sc-co"><strong>CO</strong><br/><br/></div>
+                    <div class="window" id="sc-hum"><strong>Humidity</strong><br/><br/></div>
+                    <div class="window" id="sc-light"><strong>Light</strong><br/><br/></div>
+                    <div class="window" id="sc-no2"><strong>NO2</strong><br/><br/></div>
+                    <div class="window" id="sc-noise"><strong>Noise</strong><br/><br/></div>
+                    <div class="window" id="sc-temp"><strong>Temperature</strong><br/><br/></div>
+
+                    <div class="window" id="pk-fan" data-toggle="popover" data-trigger="hover" title="Fan" data-content="Not connected to any sensor"><strong>Fan</strong><br/><br/></div>
+                    <div class="window" id="pk-led" data-toggle="popover" data-trigger="hover" title="Light" data-content="Not connected to any sensor"><strong>Lights</strong><br/><br/></div>
+                    <div class="window" id="pk-vibro" data-toggle="popover" data-trigger="hover" title="Vibration" data-content="Not connected to any sensor"><strong>Vibration</strong><br/><br/></div>
+                    <div class="window" id="pk-motion" data-toggle="popover" data-trigger="hover" title="Movement" data-content="Not connected to any sensor"><strong>Movement</strong><br/><br/></div>
+
+                </div>
 
             </div>
         </div>
@@ -231,7 +235,8 @@
     </div>
 
 
-<!-- Scripts -->
+
+    <!-- Scripts -->
     <script src="js/vendor/jquery.min.js"></script>
 
     <!--Bootstrap-->
