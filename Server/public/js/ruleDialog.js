@@ -20,7 +20,7 @@ function createRule(sensorData, sensorLoc, boxData){
     box = boxData;
 
     //load data model with the sensor name
-    loadDataModel(sensorData.label);
+    loadDataModel(sensorData.label, boxData.label);
 
     //reset rule
     newRule.sensorLoc = sensorLoc;
@@ -94,8 +94,8 @@ function getSetting(){
 
         //create html for settings for this box and mode
         var html = "";
-        var current_data_mode = dataModel[newRule.boxIndex].boxData[newRule.modeIndex];
-        var current_settings = current_data_mode.modeSettings;
+        var current_data_mode = getModeData(newRule.boxIndex, newRule.modeIndex).modeType;
+        var current_settings = getModeData(newRule.boxIndex, newRule.modeIndex).modeSettings;
 
         //check if there is only 1 setting for current mode
         if (current_settings.length == 1) {
@@ -183,7 +183,7 @@ function getArgs(){
 
         //create html for args (if any) for this box, mode and setting
         var html = "";
-        var current_data_setting = dataModel[newRule.boxIndex].boxData[newRule.modeIndex].modeSettings[newRule.settingIndex];
+        var current_data_setting = getSettingData(newRule.boxIndex, newRule.modeIndex, newRule.settingIndex);
         var current_args = current_data_setting.settingArgs;
 
         //check if there are any args for this mode and setting
@@ -244,6 +244,9 @@ function storeNewRule(){
     //if(newRule.sliderVal > -1){
       //  console.log("sliderVal = "+newRule.sliderVal);
     //}
+
+    //update popover with content for new connection
+    updatePopContent(box.name, sensor.name, newRule.sensorLoc, newRule.modeIndex, newRule.settingIndex, newRule.argIndex);
 
     //close all modals
     closeAllModals();

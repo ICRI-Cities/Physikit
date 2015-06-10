@@ -73,68 +73,6 @@ var connectorPaintStyle = {
         //connection.getOverlay("label").setLabel(connection.sourceId.substring(15) + "-" + connection.targetId.substring(15));
     };
 
-var drawConnections = function(connectionList){
-
-    for(var i=0; i<connectionList.length; i++){
-        var nextConnection = connectionList[i];
-
-        var target = nextConnection.cube;
-        var source = nextConnection.smartSensor;
-        var location = nextConnection.sensorLoc;
-
-        //console.log("next connection: "+source+", "+target+", "+location);
-
-        //get source and target ids
-        var cubeData = window.common.getCubeByName(target);
-        var sensorData = window.common.getSensorByName(source);
-
-        //check that source, target and location are valid
-        if(cubeData != undefined){
-            if(sensorData != undefined){
-                if(location != undefined){
-
-                    //console.log(sensorData.name+", "+cubeData.name+", "+location);
-
-                     //set tab for this location in common.js
-                    if($("#tab-one").val() == location){
-                        window.common.setCubeTab(target, 0);
-                    }else if($("#tab-two").val() == location){
-                        window.common.setCubeTab(target, 1);
-                    }else if($("#tab-three").val() == location){
-                        window.common.setCubeTab(target, 2);
-                    }else if($("#tab-four").val() == location){
-                        window.common.setCubeTab(target, 3);
-                    }else if($("#tab-five").val() == location){
-                        window.common.setCubeTab(target, 4);
-                    }else{
-                        console.log("could not set a tab for connection");
-                    }
-
-                    var sourceID = sensorData.id;
-                    var targetID = cubeData.id;
-
-                    //get tab of target for this connection
-                    var targetTab = cubeData.tab;
-
-                    if(targetTab == activeTab){
-                        drawVisibleConnection(sourceID, targetID);
-                    }else{
-                        drawHiddenConnection(sourceID, targetID);
-                    }
-                }else{
-                    console.log("unknown location - ignoring existing connection");
-                }
-            }else{
-                console.log("unknown sensor - ignoring existing connection");
-            }
-        }else{
-            console.log("unknown box - ignoring existing connection");
-        }
-    }
-
-    initialised = true; //register new connections from here on
-};
-
 //don't initalise jsPlumb elements until after login
 //this ensures all elements get properly initialised with their relative positions
 //jsPlumb.ready(function(){
@@ -262,6 +200,9 @@ function initialisePlumb() {
             //reset tab for this box to -1
             window.common.setCubeTab(boxID, -1);
 
+            //reset popover content
+            resetPopContent(boxName);
+
             //get sensor name
             var sensorID = connInfo.sourceId;
             var sensorData = window.common.getSensorById(sensorID);
@@ -304,6 +245,65 @@ function initialisePlumb() {
     //get existing connections from database and handle in callback
     getExistingConnections(drawConnections);
 }
+
+//once jsplumb in initialised draw connections to represent existing rules
+var drawConnections = function(connectionList){
+
+    for(var i=0; i<connectionList.length; i++){
+        var nextConnection = connectionList[i];
+
+        var target = nextConnection.cube;
+        var source = nextConnection.smartSensor;
+        var location = nextConnection.sensorLoc;
+
+        //get source and target ids
+        var cubeData = window.common.getCubeByName(target);
+        var sensorData = window.common.getSensorByName(source);
+
+        //check that source, target and location are valid
+        if(cubeData != undefined){
+            if(sensorData != undefined){
+                if(location != undefined){
+
+                    //set tab for this location in common.js
+                    if($("#tab-one").val() == location){
+                        window.common.setCubeTab(target, 0);
+                    }else if($("#tab-two").val() == location){
+                        window.common.setCubeTab(target, 1);
+                    }else if($("#tab-three").val() == location){
+                        window.common.setCubeTab(target, 2);
+                    }else if($("#tab-four").val() == location){
+                        window.common.setCubeTab(target, 3);
+                    }else if($("#tab-five").val() == location){
+                        window.common.setCubeTab(target, 4);
+                    }else{
+                        console.log("could not set a tab for connection");
+                    }
+
+                    var sourceID = sensorData.id;
+                    var targetID = cubeData.id;
+
+                    //get tab of target for this connection
+                    var targetTab = cubeData.tab;
+
+                    if(targetTab == activeTab){
+                        drawVisibleConnection(sourceID, targetID);
+                    }else{
+                        drawHiddenConnection(sourceID, targetID);
+                    }
+                }else{
+                    console.log("unknown location - ignoring existing connection");
+                }
+            }else{
+                console.log("unknown sensor - ignoring existing connection");
+            }
+        }else{
+            console.log("unknown box - ignoring existing connection");
+        }
+    }
+
+    initialised = true; //register new connections from here on
+};
 
 function refreshConnectionView(target){
     activeTab = target;

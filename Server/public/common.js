@@ -21,11 +21,11 @@
     ];
 
     var locationList = [
-        {locName: "family1"},
-        {locName: "family2"},
-        {locName: "family3"},
-        {locName: "family4"},
-        {locName: "family5"}
+        {name: "family1", label: "House A", background: "ui/images/backgroundA.png"},
+        {name: "family2", label: "House B", background: "ui/images/backgroundB.jpg"},
+        {name: "family3", label: "House C", background: "ui/images/backgroundC.jpg"},
+        {name: "family4", label: "House D", background: "ui/images/backgroundD.jpg"},
+        {name: "family5", label: "House E", background: "ui/images/backgroundE.jpg"}
     ];
 
     exports.sensors = function(){
@@ -41,7 +41,7 @@
     }
 
     //helper methods
-    exports.getCubeByName = function getCubeByName (cubeName) {
+    exports.getCubeByName = function (cubeName) {
         for (var i = 0; i < cubeList.length; i++) {
             if (cubeList[i].name == cubeName) {
                 return cubeList[i];
@@ -53,6 +53,14 @@
         for(var i=0; i<cubeList.length; i++){
             if(cubeList[i].id == cubeId){
                 return cubeList[i];
+            }
+        }
+    };
+
+    exports.getCubeIndexByName = function (cubeName){
+        for(var i=0; i<cubeList.length; i++){
+            if(cubeList[i].name == cubeName){
+                return i;
             }
         }
     };
@@ -73,6 +81,14 @@
         }
     };
 
+    exports.getSensorIndexByName = function(sensorName){
+        for(var i=0; i<sensorList.length; i++){
+            if(sensorList[i].name == sensorName){
+                return i;
+            }
+        }
+    };
+
     exports.setCubeTab = function(cubeName, cubeTab){
         for(var i=0; i<cubeList.length; i++){
             if(cubeList[i].name == cubeName){
@@ -82,9 +98,17 @@
         }
     };
 
+    exports.getLocationByName = function(locationName){
+        for(var i=0; i<locationList.length; i++){
+            if(locationList[i].name == locationName){
+                return locationList[i];
+            }
+        }
+    };
+
     exports.getLocationIndex = function(locationName){
         for(var i=0; i<locationList.length; i++){
-            if(locationList[i].locName == locationName){
+            if(locationList[i].name == locationName){
                 return i;
             }
         }
