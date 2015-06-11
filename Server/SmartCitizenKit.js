@@ -21,6 +21,7 @@ var SmartCitizenKit =  function(id, token, deviceId){
     this.interval = 2000;
     this.token = token;
     this.deviceId = deviceId;
+    this.oldpost = undefined;
 
     var self =  this;
 
@@ -61,6 +62,7 @@ var SmartCitizenKit =  function(id, token, deviceId){
                     //send an event to report new data
                     self.emit("DataReceived", self.id, data);
 
+                    self.oldpost = self.lastpost;
                     //cache data
                     self.lastpost = data;
                 }

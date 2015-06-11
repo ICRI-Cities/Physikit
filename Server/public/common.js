@@ -5,12 +5,12 @@
 (function(exports){
 
     var sensorList = [
-        {id: "sc-temp", name: "temp", label: "Temperature"},
-        {id: "sc-hum", name: "hum", label: "Humidity"},
-        {id: "sc-co", name: "co", label: "CO"},
-        {id: "sc-no2", name: "no2", label: "NO2"},
-        {id: "sc-light", name: "light", label: "Light"},
-        {id: "sc-noise", name: "noise", label: "Noise"}
+        {id: "sc-temp", name: "temp", label: "Temperature", min:0, max:40},
+        {id: "sc-hum", name: "hum", label: "Humidity", min:0, max:100},
+        {id: "sc-co", name: "co", label: "CO",min:0, max:1000},
+        {id: "sc-no2", name: "no2", label: "NO2",min:0, max:1000},
+        {id: "sc-light", name: "light", label: "Light",min:0, max:1000},
+        {id: "sc-noise", name: "noise", label: "Noise",min:0, max:100}
     ];
 
     var cubeList = [
