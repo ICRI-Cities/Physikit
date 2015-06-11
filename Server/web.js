@@ -236,6 +236,7 @@ function RunRule(rule){
                     //Find the sensor from the right SCK
                     var sckId = rule.smartId;
 
+                    //Grab th
                     var operator =  rule.condition.substring(1,2);
 
                     var value = rule.condition.substring(2,rule.condition.length);

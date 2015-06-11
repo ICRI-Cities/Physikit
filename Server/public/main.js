@@ -106,7 +106,7 @@ function Send(cube,sensor,sensorLoc,mode,setting,args,value){
         smartId :$.cookie("physikit"),
         sensorLoc: sensorLoc,
         cube : cube,
-        condition : "constant",
+        condition : "m",
         mode : mode,
         setting : setting,
         args : args,
