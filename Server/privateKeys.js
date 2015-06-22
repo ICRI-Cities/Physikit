@@ -23,6 +23,8 @@ var Keys = function(){
         id:3
     };
     this.databaseUrl ='mongodb://physikit:physikit@ds031942.mongolab.com:31942/physikit';
+
+    //this.databaseUrl = 'mongodb://physikit:physikit@ds043962.mongolab.com:43962/physikitbu';
     this.jwtKey = 'fdsldsoiewuroiewuriqwjdshfksh';
 }
 

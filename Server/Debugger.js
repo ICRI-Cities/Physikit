@@ -13,8 +13,6 @@ exports.details = false;
 exports.disablePhysikitCalls = false;
 exports.log = function(text,source,type) {
 
-
-
     var time = moment().format("D MMM HH:mm:ss") + " - ";
 
     var cLength= process.stdout.columns;
@@ -23,10 +21,6 @@ exports.log = function(text,source,type) {
     var sender = source != undefined ? "[" + source + "] ":"";
 
     var msg = sender + text;
-
-    fs.appendFile('./Logs/data.log', time+msg + "\n", function (err) {
-        if (err) console.log("Error writing to file");
-    });
 
     switch(type) {
         case "Error":
@@ -41,12 +35,12 @@ exports.log = function(text,source,type) {
             msg = msg.yellow;
             time = time.bgYellow;
         default:
+            msg = msg.white;
+            time =  time.bgBlack;
     }
 
     var length = cLength-tLength-1;
     var msgs = msg.chunk(length);
-
-    //console.log(msgs);
 
     for (var i = 0, len = msgs.length; i < len; i++) {
         if(i==0)

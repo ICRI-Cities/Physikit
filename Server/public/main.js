@@ -226,7 +226,7 @@ $(document).ready(function() {
 function HandleSmartCitizenMessage(id,data){
 
     //Todo put them in separate containers
-        console.log(data.device.last_insert_datetime);
+        console.log(data);
         $("#sc").html(
             "<strong><span style='color: #00ff00'>Connected</span></strong>"
             /*"You are currently connected to a device named "

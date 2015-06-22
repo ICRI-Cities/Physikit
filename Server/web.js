@@ -23,6 +23,7 @@ var Database = require('./Database');
  * Database handle
  */
 var db = new Database();
+db.Ping();
 
 var SmartCitizenKitCollection = require('./SmartCitizenKitCollection');
 
@@ -102,6 +103,7 @@ app.post('/api/getLoginLocation', function(req,res){
     })
 });
 
+
 /**
  * All the smart citizen kits
  */
@@ -119,6 +121,12 @@ kit.on('DataReceived', function(id,data) {
     //Since we have new data, we need to run all rules
     RunRules("Smart Citizen kit "+id+" reported new data.");
 });
+
+
+
+var sparks = [];
+
+
 
 
 /**
@@ -193,8 +201,8 @@ function RunRule(rule){
             if(debug.details)
                 debug.log("Run rule for " + rule.cube + " on Physikit "+ rule.id,"Physikit Server");
 
-            switch(rule.condition.substring(0,1)) {
-                case "m" :
+            switch(rule.mode) {
+                case "0":
                     //Find the sensor from the right SCK
                     var sckId = rule.smartId;
 
@@ -215,9 +223,8 @@ function RunRule(rule){
                                 UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,mappedValue);
                         }
                     });
-
                     break;
-                case "r":
+                case "2":
                     //Find the sensor from the right SCK
                     var sckId = rule.smartId;
 
@@ -230,16 +237,15 @@ function RunRule(rule){
                                 UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,relativeMove);
                         }
                     });
-
                     break;
-                case "a":
+                case "1":
                     //Find the sensor from the right SCK
                     var sckId = rule.smartId;
 
                     //Grab th
-                    var operator =  rule.condition.substring(1,2);
+                    var operator =  rule.condition.substring(0,1);
 
-                    var value = rule.condition.substring(2,rule.condition.length);
+                    var value = rule.condition.substring(1,rule.condition.length);
 
                     CheckIfAlertIsValidFromSensorOfSck(rule.smartSensor,sckId,operator,value,function(result){
                         if(result == true){
@@ -255,11 +261,6 @@ function RunRule(rule){
                     break;
             }
 
-
-            if(!debug.disablePhysikitCalls)
-                UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,rule.value);
-
-
             //Send update event
             io.to(rule.id).emit('rule',rule);
 
@@ -267,6 +268,15 @@ function RunRule(rule){
     }
 }
 
+/**
+ * Check if alert rule is valid
+ * @param sensor - the name of the sensor
+ * @param sckId - the id of smart citizen kit
+ * @param operator - operator: >.< or =
+ * @param setValue - the value in the condition
+ * @param callback - to handle results
+ * @constructor
+ */
 function CheckIfAlertIsValidFromSensorOfSck(sensor,sckId,operator,setValue,callback){
     //Find the kit with the right ID
     var found = false;
@@ -360,6 +370,13 @@ function GetValueFromSensorOfSck(sensor,sckId,callback){
     }
 }
 
+/**
+ * Get the relative distance between sensor kits
+ * @param sensor
+ * @param sckId
+ * @param callback
+ * @constructor
+ */
 function GetRelativeDistanceFromSensorOfSck(sensor,sckId,callback){
 
     //Find the kit with the right ID
@@ -609,16 +626,34 @@ function UpdatePhysikit(id,cube,mode,setting,args,value){
         }
 
         //Create new physikit instance based on id
-        var pk = new Physikit(id,result[0].physikit);
+        //var pk = new Physikit(id,result[0].physikit);
 
-        if(typeof pk[cube] != "function"){
-            if(debug.output)
-                debug.log(cube + " is not a physikit function","Physikit Server");
-            return;
+        var pk = new Physikit();
+
+        var dId = undefined;
+
+        var userKeys = result[0].physikit;
+
+        switch(cube){
+            case "light":
+                dId = userKeys.lightDeviceToken;
+                break;
+            case "buzz":
+                dId =  userKeys.buzzDeviceToken;
+                break;
+            case "move":
+                dId =  userKeys.moveDeviceToken;
+                break;
+            case "fan":
+                dId =  userKeys.fanDeviceToken;
+                break;
         }
 
-        //Update the right cube
-        pk[cube](mode,setting,args,value);
+        if(debug.details)
+            debug.log("Kit " + id+" -> Set" + cube+": "+ mode + '-' + setting+ '-'  +args + '-'+ value,"Physikit Controller","Success");
+
+        pk.Message(userKeys.token,dId,mode,setting,args,value);
+
     });
 }
 
@@ -855,4 +890,21 @@ app.get('/api/:id/users/',function(req, res){
             res.send(list);
         });
     });
+});
+
+
+app.get('/api/:method/:value1/:value2',function(req,res){
+
+    switch(req.params.method){
+        case "relative":
+
+            break;
+        case "mapping":
+
+            break;
+        case "alert":
+
+            break;
+        default: res.send("No valid method");
+     }
 });
