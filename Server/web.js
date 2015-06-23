@@ -23,6 +23,7 @@ var Database = require('./Database');
  * Database handle
  */
 var db = new Database();
+db.Ping();
 
 var SmartCitizenKitCollection = require('./SmartCitizenKitCollection');
 
@@ -102,6 +103,7 @@ app.post('/api/getLoginLocation', function(req,res){
     })
 });
 
+
 /**
  * All the smart citizen kits
  */
@@ -119,6 +121,12 @@ kit.on('DataReceived', function(id,data) {
     //Since we have new data, we need to run all rules
     RunRules("Smart Citizen kit "+id+" reported new data.");
 });
+
+
+
+var sparks = [];
+
+
 
 
 /**
@@ -190,19 +198,257 @@ function RunRule(rule){
         //Check if request sensor exists
         if (SmartCitizenSensorExist(rule.smartSensor)) {
 
-            //Update the Physikit with the new rule
-            if(!debug.disablePhysikitCalls)
-                UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,rule.value);
+            if(debug.details)
+                debug.log("Run rule for " + rule.cube + " on Physikit "+ rule.id,"Physikit Server");
+
+            switch(rule.mode) {
+                case "0":
+                    //Find the sensor from the right SCK
+                    var sckId = rule.smartId;
+
+                    //Get the correct sensor value from the kit
+                    GetValueFromSensorOfSck(rule.smartSensor, sckId,function(valueOfSensor){
+
+                        if(valueOfSensor !=undefined){
+                            //Get the range of the sensor
+                            var sensorRange = {};
+                            sensorRange.min = common.getSensorByName(rule.smartSensor).min;
+                            sensorRange.max  = common.getSensorByName(rule.smartSensor).max;
+
+                            //Map the value to Physikit Space
+                            var mappedValue = valueOfSensor.map(sensorRange.min,sensorRange.max,0,255);
+
+                            //Execute Physikit command
+                            if(!debug.disablePhysikitCalls)
+                                UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,mappedValue);
+                        }
+                    });
+                    break;
+                case "2":
+                    //Find the sensor from the right SCK
+                    var sckId = rule.smartId;
+
+                    //Calculate the relative distance: 0: decrease, 1: same, 2: increase
+                    GetRelativeDistanceFromSensorOfSck(rule.smartSensor,sckId,function(relativeMove){
+                        if(relativeMove == 0 || relativeMove ==2)
+                        {
+                            //Todo: only increase or decrease, or also send "same"??????
+                            if(!debug.disablePhysikitCalls)
+                                UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,relativeMove);
+                        }
+                    });
+                    break;
+                case "1":
+                    //Find the sensor from the right SCK
+                    var sckId = rule.smartId;
+
+                    //Grab th
+                    var operator =  rule.condition.substring(0,1);
+
+                    var value = rule.condition.substring(1,rule.condition.length);
+
+                    CheckIfAlertIsValidFromSensorOfSck(rule.smartSensor,sckId,operator,value,function(result){
+                        if(result == true){
+                            if(!debug.disablePhysikitCalls)
+                                UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,rule.value);
+                        }
+
+                    });
+                    break;
+                default:
+                    if(debug.details)
+                        debug.log("Found incompatible rule "+ rule.condition,"Physikit Server","Error");
+                    break;
+            }
 
             //Send update event
             io.to(rule.id).emit('rule',rule);
 
-            if(debug.details)
-                debug.log("Run rule for " + rule.cube + " on Physikit "+ rule.id,"Physikit Server");
         }
     }
 }
 
+/**
+ * Check if alert rule is valid
+ * @param sensor - the name of the sensor
+ * @param sckId - the id of smart citizen kit
+ * @param operator - operator: >.< or =
+ * @param setValue - the value in the condition
+ * @param callback - to handle results
+ * @constructor
+ */
+function CheckIfAlertIsValidFromSensorOfSck(sensor,sckId,operator,setValue,callback){
+    //Find the kit with the right ID
+    var found = false;
+    kit.kits.forEach(function(sck) {
+        if(sckId == sck.id  ){
+            found = true;
+            var post = sck.lastpost;
+            if(post!=undefined){
+
+                var sensors = post.device.posts[0];
+
+                if(sensors != undefined)
+                {
+                    var value = sensors[sensor];
+                    setValue = Number(setValue);
+
+                    value = Number(value);
+
+                    switch(operator){
+                        case "<":
+                            if(value < setValue)
+                                callback(true);
+                            else
+                                callback(false);
+                            break;
+
+                        case ">":
+                            if(value > setValue)
+                                callback(true);
+                            else
+                                callback(false);
+                            break;
+
+                        case "=":
+                            if(setValue == value)
+                                callback(true);
+                            else
+                                callback(false);
+                            break;
+                    }
+
+                    return;
+                }
+                else
+                {
+                    callback(undefined);
+                }
+            }
+        }
+    });
+
+    if(!found){
+        callback(undefined);
+    }
+}
+
+/**
+ * Gets the sensor value from a specific Smart Citizen kit
+ * @param sensor - the name of the sensor
+ * @param sckId - the id of the kit
+ * @param callback - callback to handle results
+ * @constructor
+ */
+function GetValueFromSensorOfSck(sensor,sckId,callback){
+
+    //Find the kit with the right ID
+    var found = false;
+    kit.kits.forEach(function(sck) {
+        if(sckId == sck.id  ){
+            found = true;
+            var post = sck.lastpost;
+            if(post!=undefined){
+
+                var sensors = post.device.posts[0];
+
+                if(sensors != undefined)
+                {
+                    callback(sensors[sensor]);
+                    return;
+                }
+                else
+                {
+                    callback(undefined);
+                }
+            }
+        }
+    });
+
+    if(!found){
+        callback(undefined);
+    }
+}
+
+/**
+ * Get the relative distance between sensor kits
+ * @param sensor
+ * @param sckId
+ * @param callback
+ * @constructor
+ */
+function GetRelativeDistanceFromSensorOfSck(sensor,sckId,callback){
+
+    //Find the kit with the right ID
+    var found = false;
+
+    //Search the kits with id
+    kit.kits.forEach(function(sck) {
+
+        //Kit found
+        if(sckId == sck.id  ){
+
+            //Grab old and new post
+            var post = sck.lastpost;
+            var oldPost= sck.oldpost;
+
+            //SCK message exists
+            if(post!=undefined){
+
+                var sensors = post.device.posts[0];
+
+                //sensor data exists
+                if(sensors != undefined)
+                {
+                    var value = sensors[sensor];
+
+                    //old package exist
+                    if (oldPost != undefined) {
+
+                        var oldSensors = oldPost.device.posts[0];
+
+                        //old sensor data exists
+                        if (oldSensors != undefined) {
+                            found = true;
+                            var oldValue = oldSensors[sensor];
+
+                            if(debug.details)
+                                debug.log("sensor: "+sensor + " old: "+oldValue + " new: "+value,"Physikit Server");
+
+                            //Calculate relative distance
+                            if (oldValue == value)
+                                callback(1);
+                            else if (value > oldValue)
+                                callback(2);
+                            else
+                                callback(0);
+                        }
+                    }
+                }
+                else
+                {
+                    callback(undefined);
+                }
+            }
+        }
+    });
+
+    if(!found){
+        callback(1);
+    }
+}
+
+/**
+ * Maps one value range to another
+ * @param in_min - min of input range
+ * @param in_max - max of input range
+ * @param out_min - min of output range
+ * @param out_max - max of output range
+ * @returns {*} - mapped value
+ */
+Number.prototype.map = function ( in_min , in_max , out_min , out_max ) {
+    return ( this - in_min ) * ( out_max - out_min ) / ( in_max - in_min ) + out_min;
+}
 
 /**
  * Helper function to search the database
@@ -380,16 +626,34 @@ function UpdatePhysikit(id,cube,mode,setting,args,value){
         }
 
         //Create new physikit instance based on id
-        var pk = new Physikit(id,result[0].physikit);
+        //var pk = new Physikit(id,result[0].physikit);
 
-        if(typeof pk[cube] != "function"){
-            if(debug.output)
-                debug.log(cube + " is not a physikit function","Physikit Server");
-            return;
+        var pk = new Physikit();
+
+        var dId = undefined;
+
+        var userKeys = result[0].physikit;
+
+        switch(cube){
+            case "light":
+                dId = userKeys.lightDeviceToken;
+                break;
+            case "buzz":
+                dId =  userKeys.buzzDeviceToken;
+                break;
+            case "move":
+                dId =  userKeys.moveDeviceToken;
+                break;
+            case "fan":
+                dId =  userKeys.fanDeviceToken;
+                break;
         }
 
-        //Update the right cube
-        pk[cube](mode,setting,args,value);
+        if(debug.details)
+            debug.log("Kit " + id+" -> Set" + cube+": "+ mode + '-' + setting+ '-'  +args + '-'+ value,"Physikit Controller","Success");
+
+        pk.Message(userKeys.token,dId,mode,setting,args,value);
+
     });
 }
 
@@ -626,4 +890,21 @@ app.get('/api/:id/users/',function(req, res){
             res.send(list);
         });
     });
+});
+
+
+app.get('/api/:method/:value1/:value2',function(req,res){
+
+    switch(req.params.method){
+        case "relative":
+
+            break;
+        case "mapping":
+
+            break;
+        case "alert":
+
+            break;
+        default: res.send("No valid method");
+     }
 });

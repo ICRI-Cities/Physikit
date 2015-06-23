@@ -34,19 +34,19 @@ function IsNull(field){
 function ValidateDatabaseCall(db,collection,entity){
     if(IsNull(db)){
         if(debug.output)
-            console.log("Database connection lost","Database","Error");
+            debug.log("Database connection lost","Database","Error");
         return false;
     }
 
     else if(IsNull(collection)){
         if(debug.output)
-            console.log("No Collection was defined","Database","Error");
+            debug.log("No Collection was defined","Database","Error");
         return false;
     }
 
     else if(IsNull(entity)){
         if(debug.output)
-            console.log("No entity was defined","Database","Error");
+            debug.log("No entity was defined","Database","Error");
         return false;
     }
 
@@ -70,7 +70,7 @@ var insertDocument = function (db,collection, entity, callback) {
 
         if(err)
             if(debug.output)
-                console.log("Failed to insert "+ JSON.stringify(entity) +" into " + collection,"Database","Error");
+                debug.log("Failed to insert "+ JSON.stringify(entity) +" into " + collection,"Database","Error");
 
         if(debug.output)
             debug.log("Inserted " + JSON.stringify(entity) +" into " + collection,"Database","Success");
@@ -96,7 +96,7 @@ var removeDocument = function(db, collection, entity, callback) {
 
         if(err)
             if(debug.output)
-                console.log("Failed to remove "+ JSON.stringify(entity) +" from "+ collection,"Database","Error");
+                debug.log("Failed to remove "+ JSON.stringify(entity) +" from "+ collection,"Database","Error");
 
         if(debug.output)
             debug.log("Removed " +JSON.stringify(entity) +" from "+ collection,"Database","Success");
@@ -127,7 +127,7 @@ var updateDocument  = function(db,collection,newEntity,fieldName,oldEntity, call
 
         if(err)
             if(debug.output)
-                console.log("Failed to replace and put "+ JSON.stringify(entity) +" into " + collection,"Database","Error");
+                debug.log("Failed to replace and put "+ JSON.stringify(entity) +" into " + collection,"Database","Error");
 
             if(debug.output)
                 debug.log("Replace and put " + JSON.stringify(newEntity) +" into " + collection,"Database","Success");
@@ -152,14 +152,14 @@ var findDocuments = function(db,collection,callback){
 
         if(err)
             if(debug.output)
-                console.log("Collection not found: " +err,"Database","Error");
+                debug.log("Collection not found: " +err,"Database","Error");
 
         var list = [];
 
         cursor.each(function(err, doc) {
 
             if(err)
-                if(debug.output) console.log("Error trying to find documents: " +err,"Database","Error");
+                if(debug.output) debug.log("Error trying to find documents: " +err,"Database","Error");
 
             if (doc != null)
                 list.push(doc);
@@ -190,7 +190,7 @@ var findDocumentsWithId = function(db,collection,fieldName, entity,callback){
 
         if(err)
             if(debug.output)
-                console.log("Collection not found: " +err,"Database","Error");
+                debug.log("Collection not found: " +err,"Database","Error");
 
         var list = [];
 
@@ -198,7 +198,7 @@ var findDocumentsWithId = function(db,collection,fieldName, entity,callback){
 
             if(err)
                 if(debug.output)
-                    console.log("Error trying to find documents: " +err,"Database","Error");
+                    debug.log("Error trying to find documents: " +err,"Database","Error");
 
             if (doc != null)
                 list.push(doc);
@@ -214,11 +214,17 @@ var findDocumentsWithId = function(db,collection,fieldName, entity,callback){
  * Database handle
  * @constructor
  */
-var Database = function(){
-
-};
+var Database = function(){};
 
 
+
+Database.prototype.Ping = function(){
+    mongoClient.connect(keys.databaseUrl, function(err, db) {
+        if(err)
+            if(debug.output)
+                debug.log("Failed to connect to DB: " +err,"Database","Error");
+        });
+}
 
 /**
  * Opens database connection and  replaces an entity in the database
@@ -233,7 +239,7 @@ Database.prototype.Replace = function(collection,newEntity,fieldName,oldEntity){
 
         if(err)
             if(debug.output)
-                console.log("Failed to connect to DB: " +err,"Database","Error");
+                debug.log("Failed to connect to DB: " +err,"Database","Error");
 
         updateDocument(db, collection,newEntity,fieldName,oldEntity, function() {
             db.close();
@@ -252,7 +258,7 @@ Database.prototype.Add = function(collection,entity){
 
         if(err)
             if(debug.output)
-                console.log("Failed to connect to DB: " +err,"Database","Error");
+                debug.log("Failed to connect to DB: " +err,"Database","Error");
 
         insertDocument(db, collection,entity, function() {
             db.close();
@@ -269,7 +275,7 @@ Database.prototype.Remove = function(collection,entity){
     mongoClient.connect(keys.databaseUrl, function(err, db){
         if (err)
             if(debug.output)
-                console.log("Failed to connect to DB: " +err,"Database","Error");
+                debug.log("Failed to connect to DB: " +err,"Database","Error");
 
         removeDocument(db, collection, entity, function() {
             db.close();
@@ -290,7 +296,7 @@ Database.prototype.FindByField = function(collection,fieldName, entity, callback
 
         if(err)
             if(debug.output)
-                console.log("Failed to connect to DB: " +err,"Database","Error");
+                debug.log("Failed to connect to DB: " +err,"Database","Error");
 
         findDocumentsWithId(db,collection,fieldName,entity,function(list) {
             db.close();
@@ -312,7 +318,7 @@ Database.prototype.FindAll = function(collection,callback) {
 
         if(err)
             if(debug.output)
-                console.log("Failed to connect to DB: " +err,"Database","Error");
+                debug.log("Failed to connect to DB: " +err,"Database","Error");
 
         findDocuments(db,collection,function(list) {
             db.close();
