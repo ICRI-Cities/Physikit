@@ -47,6 +47,28 @@ function Login(url,id){
 
 }
 
+//after login complete - initalise jsPlumb connections
+//get rules from database
+function getExistingConnections(callback){
+    //Check for cookie todo auto login
+    var cookieValue = $.cookie("physikit");
+    if(cookieValue != undefined){
+
+        var data = {};
+        data.id = cookieValue;
+
+        $.ajax({
+            type: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            url: url+"getConnections/",
+            success: function(connectionList) {
+                callback(connectionList);
+            }
+        });
+    }
+}
+
 //Connect the socket with secret
 function connect_socket (id,token) {
     console.log("Log in response: " + token.token);
@@ -76,7 +98,13 @@ function connect_socket (id,token) {
         HandleRuleMessage(rule);
     });
 
-    //Handles "onconnect" socket.io event
+    //Handles "remove" messages related to rule deletion
+    //Updates sent by our app over socket.io
+    socket.on('remove', function(rule){
+        HandleRemoveMessage(rule);
+    });
+
+    //Handles "connect" socket.io event
     socket.on("connect",function(msg){
         //send an it so server know which kit we need
         //socket.emit('id', $.cookie("physikit"));
@@ -164,7 +192,7 @@ function SwitchLogin(value,username){
         //initialise content in popovers depending on existing rules for logged in user
         initialisePopContent();
 
-        //initalise jsPlumb view depending on logged in user
+        //initialise jsPlumb view depending on logged in user
         initialisePlumb();
     }
 }
@@ -194,7 +222,7 @@ $(document).ready(function() {
     //handle tab changes
     $('a[data-toggle="tab"]').on('show.bs.tab', function (e) {
         var activeRef = $(e.target).attr("href");
-        tabChange(activeRef);
+        HandleTabChange(activeRef);
     });
 
     //initialise sliders when modal shown
@@ -208,7 +236,7 @@ $(document).ready(function() {
     });
 
     //Initialize accordion
-    $("#accordion").accordion({
+    /*$("#accordion").accordion({
         header: "h3"
     });
 
@@ -219,7 +247,7 @@ $(document).ready(function() {
     HandleSwitchEvent("light",true);
     HandleSwitchEvent("fan",true);
     HandleSwitchEvent("buzz",true);
-    HandleSwitchEvent("move",true);
+    HandleSwitchEvent("move",true);*/
 });
 
 //Handles Smart Citizen message and updates UI
@@ -246,9 +274,15 @@ function HandleSmartCitizenMessage(id,data){
 function HandleRuleMessage(rule){
     console.log("kit "+ rule.cube + " cube message: "+JSON.stringify(rule));
 
-    var checkState = (rule.value > 0);
+    //draw jsPlumb connection to represent new rule
+    drawConnection(rule.cube, rule.smartSensor, rule.sensorLoc);
 
-    if(rule.mode == 0){
+    //update popover with content for new connection
+    updatePopContent(rule.cube, rule.smartSensor, rule.sensorLoc, rule.mode, rule.setting, rule.args);
+
+    //var checkState = (rule.value > 0);
+
+    /*if(rule.mode == 0){
         if($('#'+rule.cube +'Checkbox').get(0).checked != checkState)
         {
             $('#'+rule.cube +'Checkbox').bootstrapSwitch("state",checkState,true);
@@ -262,178 +296,25 @@ function HandleRuleMessage(rule){
         if($('#'+rule.cube +'AlertCheckbox').get(0).checked !=  checkState)
         $('#'+rule.cube +'AlertCheckbox').bootstrapSwitch("state",checkState,true);
         HandleSecondarySwitch(rule.cube,checkState,false);
-    }
+    }*/
 }
 
+//Handles Rule removal messages
+function HandleRemoveMessage(rule){
+    console.log("remove "+ rule.cube + " rule: "+JSON.stringify(rule));
 
-//Handle UI switches to control Kit
-function HandleMainSwitch(cube,state,sendmessage){
-    //Grab value and toggle state based on switch state (checked == true)
-    var value = (state) ? 255:0;
-    var on = (value == 255);
+    //remove jsplumb connection attached to cube
+    var cubeID = window.common.getCubeByName(rule.cube).id;
+    deleteConnection(cubeID);
 
-    //if state is on:
-    // - send the value over socket
-    // - adjust the slider and value field
-    // - turn off the alert switch if needed
-    if(on){
-        if(sendmessage)
-            Send(cube,0,0,0,value);
-        $('#'+cube+'Slider').slider('value', value);
-        $('#'+cube+'SliderValue').text(value);
-        if($('#'+cube+'AlertCheckbox').get(0).checked)
-            $('#'+cube+'AlertCheckbox').bootstrapSwitch("state",!value);
-    }
-
-    //if state is off:
-    // - only send the value over socket if other switch is also off
-    // - reset the slider and value field
-    if(!on){
-        if(!$('#'+cube+'AlertCheckbox').get(0).checked) {
-            if(sendmessage)
-                Send(cube,0,0,0,value);
-        }
-        $('#'+cube+'Slider').slider('value', value);
-        $('#'+cube+'SliderValue').text(value);
-    }
-}
-
-//Handle interval switch for kit
-function HandleSecondarySwitch(cube,state,sendmessage){
-    //Grab value and toggle state based on switch state (checked == true)
-    var value = (state) ? 255 : 0;
-    var on = (value == 255);
-
-    //if state is on:
-    // - turn the main checkbox switch off
-    // - send the value over socket
-    if(on){
-        $('#'+cube+'Checkbox').bootstrapSwitch("state",!on);
-        if(sendmessage)
-            Send(cube,1,0,0,value);
-    }
-
-    //if state is off:
-    // - only send the value over socket if main switch is also off
-    if(!on){
-        if(!$('#'+cube+'Checkbox').get(0).checked) {
-            if(sendmessage)
-                Send(cube,1,0,0,value);
-        }
-    }
-}
-
-//Handle slides
-function HandleSliders(cube,value,sendmessage){
-    //Send the value over socket
-    if(sendmessage)
-        Send(cube,0,0,0,value);
-
-    //Calculate toggle state based on slider value
-    var state = (value>0) ? true : false;
-
-    //Set the main switch
-    $('#'+cube+'Checkbox').bootstrapSwitch("state",state);
-}
-
-//Generic handler that works for every 'cube' keyword
-//and their representations in the UI.
-//E.g. 'light'
-// -> #lightCheckbox
-// -> #lightAlertCheckbox
-// -> #lightSlider
-// -> #lightSliderValue
-function HandleSwitchEvent(cube,sendmessage){
-    //Handle the basic switch event
-    $('#'+cube+'Checkbox').on('switchChange.bootstrapSwitch', function(event, state) {
-        HandleMainSwitch(cube,state,sendmessage);
-    });
-
-    //Handle the alert box switch event
-    $('#'+cube+'AlertCheckbox').on('switchChange.bootstrapSwitch', function(event, state) {
-
-        HandleSecondarySwitch(cube,state,sendmessage);
-    });
-
-    //Handles the sliders
-    $('#'+cube+'Slider').slider({
-        orientation: "horizontal",
-        range: "min",
-        min: 0,
-        max: 255,
-        value: 0,
-
-        //We don't want to send data continuously, so we only
-        //send data when the slide adjustment is done
-        stop: function (event, ui) {
-
-            HandleSliders(cube,ui.value,sendmessage);
-        },
-
-        //While sliding is going on
-        slide: function (event, ui) {
-
-            //Update the value field
-            $('#'+cube+'SliderValue').text(ui.value);
-        }
-    });
-}
-
-//update tabs and jsplumb connections
-//when tab change occurs
-function tabChange(activeRef){
-    var locationName = "";
-    var activeTab = -1;
-
-    if(activeRef == "#tabOne"){
-        locationName = $("#tab-one").val();
-        activeTab = 0;
-    }else if(activeRef == "#tabTwo"){
-        locationName = $("#tab-two").val();
-        activeTab = 1;
-    }else if(activeRef == "#tabThree"){
-        locationName = $("#tab-three").val();
-        activeTab = 2;
-    }else if(activeRef == "#tabFour"){
-        locationName = $("#tab-four").val();
-        activeTab = 3;
-    }else if(activeRef == "#tabFive"){
-        locationName = $("#tab-five").val();
-        activeTab = 4;
-    }
-
-    //set tab background
-    var url = window.common.getLocationByName(locationName).background;
-    $("#tab-background").css("background-image", "url("+url+")");
-
-    //update jsPlumb connections
-    refreshConnectionView(activeTab);
+    //reset popover content
+    resetPopContent(rule.cube);
 }
 
 
 
-//after login complete - initalise jsPlumb connections
-//get rules from database
-function getExistingConnections(callback){
-    //Check for cookie todo auto login
-    var cookieValue = $.cookie("physikit");
-    if(cookieValue != undefined){
 
-        var data = {};
-        data.id = cookieValue;
-
-        $.ajax({
-            type: 'POST',
-            data: JSON.stringify(data),
-            contentType: 'application/json',
-            url: url+"getConnections/",
-            success: function(connectionList) {
-                callback(connectionList);
-            }
-        });
-    }
-}
-
+//TABS
 //assign location names (families) to tabs based on who has logged in
 function assignTabs(){
     var cookieValue = $.cookie("physikit");
@@ -515,9 +396,57 @@ function assignTabs(){
                 }
             }
         });
+
+        //set active tab
+        $( "#location_tabs" ).tabs().tabs({ active: 0 });
     }
 }
 
+//get the currently active tab and return the location
+//associated with this tab
+function getActiveLocation(){
+    var tabIndex = $("#location_tabs").tabs('option', 'active');
+    switch(tabIndex){
+        case 0: return $("#tab-one").val();
+        case 1: return $("#tab-two").val();
+        case 2: return $("#tab-three").val();
+        case 3: return $("#tab-four").val();
+        case 4: return $("#tab-five").val();
+        default: console.log("no active tab found");
+            return;
+    }
+}
+
+//update tabs and jsplumb connections
+//when tab change occurs
+function HandleTabChange(activeRef){
+    var locationName = "";
+
+    if(activeRef == "#tabOne"){
+        locationName = $("#tab-one").val();  //e.g. "family1"
+    }else if(activeRef == "#tabTwo"){
+        locationName = $("#tab-two").val();
+    }else if(activeRef == "#tabThree"){
+        locationName = $("#tab-three").val();
+    }else if(activeRef == "#tabFour"){
+        locationName = $("#tab-four").val();
+    }else if(activeRef == "#tabFive"){
+        locationName = $("#tab-five").val();
+    }
+
+    //set tab background
+    var url = window.common.getLocationByName(locationName).background;
+    $("#tab-background").css("background-image", "url("+url+")");
+
+    //update jsPlumb connections
+    refreshConnectionView(locationName);
+}
+
+
+
+//POPOVERS
+//Popover content handlers
+//initialise content on login based on existing rules
 function initialisePopContent(){
     var cookieValue = $.cookie("physikit");
     if(cookieValue != undefined) {
@@ -549,6 +478,7 @@ function initialisePopContent(){
     }
 }
 
+//reset popover content on rule removal
 function resetPopContent(cubeName){
     if (cubeName == "fan") {
         $("#pk-fan").attr('data-content', "Not connected to any sensor");
@@ -561,6 +491,7 @@ function resetPopContent(cubeName){
     }
 }
 
+//update popover content on new rule creation
 function updatePopContent(cubeName, sensorName, locationName, mode, setting, arg){
 
     var cubeLabel = window.common.getCubeByName(cubeName).label;
@@ -607,3 +538,115 @@ function updatePopContent(cubeName, sensorName, locationName, mode, setting, arg
 }
 
 
+//Handle UI switches to control Kit
+/*function HandleMainSwitch(cube,state,sendmessage){
+ //Grab value and toggle state based on switch state (checked == true)
+ var value = (state) ? 255:0;
+ var on = (value == 255);
+
+ //if state is on:
+ // - send the value over socket
+ // - adjust the slider and value field
+ // - turn off the alert switch if needed
+ if(on){
+ if(sendmessage)
+ Send(cube,0,0,0,value);
+ $('#'+cube+'Slider').slider('value', value);
+ $('#'+cube+'SliderValue').text(value);
+ if($('#'+cube+'AlertCheckbox').get(0).checked)
+ $('#'+cube+'AlertCheckbox').bootstrapSwitch("state",!value);
+ }
+
+ //if state is off:
+ // - only send the value over socket if other switch is also off
+ // - reset the slider and value field
+ if(!on){
+ if(!$('#'+cube+'AlertCheckbox').get(0).checked) {
+ if(sendmessage)
+ Send(cube,0,0,0,value);
+ }
+ $('#'+cube+'Slider').slider('value', value);
+ $('#'+cube+'SliderValue').text(value);
+ }
+ }
+
+ //Handle interval switch for kit
+ function HandleSecondarySwitch(cube,state,sendmessage){
+ //Grab value and toggle state based on switch state (checked == true)
+ var value = (state) ? 255 : 0;
+ var on = (value == 255);
+
+ //if state is on:
+ // - turn the main checkbox switch off
+ // - send the value over socket
+ if(on){
+ $('#'+cube+'Checkbox').bootstrapSwitch("state",!on);
+ if(sendmessage)
+ Send(cube,1,0,0,value);
+ }
+
+ //if state is off:
+ // - only send the value over socket if main switch is also off
+ if(!on){
+ if(!$('#'+cube+'Checkbox').get(0).checked) {
+ if(sendmessage)
+ Send(cube,1,0,0,value);
+ }
+ }
+ }
+
+ //Handle slides
+ function HandleSliders(cube,value,sendmessage){
+ //Send the value over socket
+ if(sendmessage)
+ Send(cube,0,0,0,value);
+
+ //Calculate toggle state based on slider value
+ var state = (value>0) ? true : false;
+
+ //Set the main switch
+ $('#'+cube+'Checkbox').bootstrapSwitch("state",state);
+ }
+
+ //Generic handler that works for every 'cube' keyword
+ //and their representations in the UI.
+ //E.g. 'light'
+ // -> #lightCheckbox
+ // -> #lightAlertCheckbox
+ // -> #lightSlider
+ // -> #lightSliderValue
+ function HandleSwitchEvent(cube,sendmessage){
+ //Handle the basic switch event
+ $('#'+cube+'Checkbox').on('switchChange.bootstrapSwitch', function(event, state) {
+ HandleMainSwitch(cube,state,sendmessage);
+ });
+
+ //Handle the alert box switch event
+ $('#'+cube+'AlertCheckbox').on('switchChange.bootstrapSwitch', function(event, state) {
+
+ HandleSecondarySwitch(cube,state,sendmessage);
+ });
+
+ //Handles the sliders
+ $('#'+cube+'Slider').slider({
+ orientation: "horizontal",
+ range: "min",
+ min: 0,
+ max: 255,
+ value: 0,
+
+ //We don't want to send data continuously, so we only
+ //send data when the slide adjustment is done
+ stop: function (event, ui) {
+
+ HandleSliders(cube,ui.value,sendmessage);
+ },
+
+ //While sliding is going on
+ slide: function (event, ui) {
+
+ //Update the value field
+ $('#'+cube+'SliderValue').text(ui.value);
+ }
+ });
+ }*/

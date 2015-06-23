@@ -7,17 +7,17 @@
     var sensorList = [
         {id: "sc-temp", name: "temp", label: "Temperature", min:0, max:45},
         {id: "sc-hum", name: "hum", label: "Humidity", min:0, max:100},
-        {id: "sc-co", name: "co", label: "CO",min:0, max:1000},
-        {id: "sc-no2", name: "no2", label: "NO2",min:0, max:1000},
-        {id: "sc-light", name: "light", label: "Light",min:0, max:20000},
-        {id: "sc-noise", name: "noise", label: "Noise",min:0, max:120}
+        {id: "sc-co", name: "co", label: "CO", min:0, max:1000},
+        {id: "sc-no2", name: "no2", label: "NO2", min:0, max:1000},
+        {id: "sc-light", name: "light", label: "Light", min:0, max:20000},
+        {id: "sc-noise", name: "noise", label: "Noise", min:0, max:120}
     ];
 
     var cubeList = [
-        {id: "pk-fan", name: "fan", label: "Fan", tab: -1},
-        {id: "pk-led", name: "light", label: "Light", tab: -1},
-        {id: "pk-motion", name: "move", label: "Movement", tab: -1},
-        {id: "pk-vibro", name: "buzz", label: "Vibration", tab: -1}
+        {id: "pk-fan", name: "fan", label: "Fan"},
+        {id: "pk-led", name: "light", label: "Light"},
+        {id: "pk-motion", name: "move", label: "Movement"},
+        {id: "pk-vibro", name: "buzz", label: "Vibration"}
     ];
 
     var locationList = [
