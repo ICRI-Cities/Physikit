@@ -15,7 +15,7 @@ var newRule = {
     sliderVal: -1
 };
 
-function createRule(sensorData, sensorLoc, boxData){
+function startDialogs(sensorData, sensorLoc, boxData){
     sensor = sensorData;
     box = boxData;
 
@@ -244,9 +244,6 @@ function storeNewRule(){
     //if(newRule.sliderVal > -1){
       //  console.log("sliderVal = "+newRule.sliderVal);
     //}
-
-    //update popover with content for new connection
-    updatePopContent(box.name, sensor.name, newRule.sensorLoc, newRule.modeIndex, newRule.settingIndex, newRule.argIndex);
 
     //close all modals
     closeAllModals();

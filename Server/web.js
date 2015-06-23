@@ -763,6 +763,8 @@ function RemoveRule(rule,callback){
                     //Remove rule if exists
                     if (ruleResult != undefined) {
                         db.Remove("rules", rule);
+
+                        io.to(rule.id).emit('remove',rule);
                     }
 
                     //Error -> rule did not exist
