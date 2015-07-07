@@ -2,7 +2,7 @@
 var lastConnElementID;
 
 var instance;
-var triggerDialog;
+var triggerDialog = true;
 
 // this is the paint style for the connecting lines..
 var connectorPaintStyle = {
@@ -149,6 +149,7 @@ function initialisePlumb() {
 
         // listen for new connections; initialise them the same way we initialise the connections at startup.
         instance.bind("connection", function (connInfo, originalEvent) {
+
             if(triggerDialog){
                 init(connInfo.connection);
 
@@ -262,10 +263,6 @@ function drawConnection(target, source, location){
 
     triggerDialog = false; //turn off dialogs
 
-    /*if(!connectionExists(target, source, location)){ //check this connection doesn't already exist
-
-    }*/
-
     var activeLocation = getActiveLocation();
 
     //get source and target ids
@@ -288,9 +285,9 @@ function drawConnection(target, source, location){
                     }else{
                         drawHiddenConnection(sourceID, targetID, location);
                     }
-                }else{
+                }/*else{
                     console.log("target already has connection - ignoring this request");
-                }
+                }*/
             }else{
                 console.log("unknown location - ignoring existing connection");
             }

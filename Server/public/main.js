@@ -228,11 +228,10 @@ $(document).ready(function() {
     //initialise sliders when modal shown
     $('#settingModal').on('shown.bs.modal', function (e) {
         //initialise slider
-        $('#alertSlider').slider({
-            formatter: function (value) {
-                $('input:hidden[name=sliderVal]').val(value);
-            }
-        });
+        $('#alertSlider').slider()
+            .on('slideStop', function(ev){
+                $('input:hidden[name=sliderVal]').val(ev.value);
+            });
     });
 
     //Initialize accordion
@@ -254,7 +253,7 @@ $(document).ready(function() {
 function HandleSmartCitizenMessage(id,data){
 
     //Todo put them in separate containers
-        console.log(data);
+        //console.log(data);
         $("#sc").html(
             "<strong><span style='color: #00ff00'>Connected</span></strong>"
             /*"You are currently connected to a device named "
@@ -272,7 +271,7 @@ function HandleSmartCitizenMessage(id,data){
 
 //Handles Physikit Messages
 function HandleRuleMessage(rule){
-    console.log("kit "+ rule.cube + " cube message: "+JSON.stringify(rule));
+    //console.log("kit "+ rule.cube + " cube message: "+JSON.stringify(rule));
 
     //draw jsPlumb connection to represent new rule
     drawConnection(rule.cube, rule.smartSensor, rule.sensorLoc);
@@ -301,7 +300,7 @@ function HandleRuleMessage(rule){
 
 //Handles Rule removal messages
 function HandleRemoveMessage(rule){
-    console.log("remove "+ rule.cube + " rule: "+JSON.stringify(rule));
+    //console.log("remove "+ rule.cube + " rule: "+JSON.stringify(rule));
 
     //remove jsplumb connection attached to cube
     var cubeID = window.common.getCubeByName(rule.cube).id;
@@ -317,6 +316,7 @@ function HandleRemoveMessage(rule){
 //TABS
 //assign location names (families) to tabs based on who has logged in
 function assignTabs(){
+
     var cookieValue = $.cookie("physikit");
     if(cookieValue != undefined) {
 
@@ -399,6 +399,8 @@ function assignTabs(){
 
         //set active tab
         $( "#location_tabs" ).tabs().tabs({ active: 0 });
+    }else{
+        console.log("cookie value is undefined: "+cookieValue);
     }
 }
 
@@ -448,6 +450,7 @@ function HandleTabChange(activeRef){
 //Popover content handlers
 //initialise content on login based on existing rules
 function initialisePopContent(){
+
     var cookieValue = $.cookie("physikit");
     if(cookieValue != undefined) {
 
@@ -475,6 +478,8 @@ function initialisePopContent(){
                 }
             }
         });
+    }else{
+        console.log("cookie value is undefined: "+cookieValue);
     }
 }
 
@@ -515,7 +520,7 @@ function updatePopContent(cubeName, sensorName, locationName, mode, setting, arg
     var popText = "<div>Connected to: <strong>" + sensorLabel + " sensor </strong><br>"
         + "From: <strong>" + locationLabel + "</strong><br><br>";
     if (modeText != undefined) {
-        popText = popText + cubeLabel + " cube will: <br>" + modeText + ". ";
+        popText = popText + cubeLabel + " cube will: <br>" + modeText + ". It will: ";
     }
     if (settingText != undefined) {
         popText = popText + settingText +". ";
