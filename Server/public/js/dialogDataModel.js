@@ -149,13 +149,13 @@ function loadDataModel(sensorLabel, boxLabel) {
                         imageURL: "ui/images/alert-data-icon.png",
                         modeSettings: [
                             {
-                                settingText: "<small><em>By flashing lights a certain number of times </em></small>",
+                                settingText: "<small><em>Flash the lights 5 times</em></small>",
                                 imageURL: "ui/images/alert-data-icon.png",
                                 argQuestion: "",
                                 settingArgs: []
                             },
                             {
-                                settingText: "<small><em>By showing a rainbow pattern </em></small>",
+                                settingText: "<small><em>Show a rainbow pattern</em></small>",
                                 imageURL: "ui/images/alert-data-icon.png",
                                 argQuestion: "",
                                 settingArgs: []
@@ -168,13 +168,13 @@ function loadDataModel(sensorLabel, boxLabel) {
                         imageURL: "ui/images/relative-data-icon.png",
                         modeSettings: [
                             {
-                                settingText: "<small><em>By showing UP, DOWN or EQUALS signs</em></small>",
+                                settingText: "<small><em>Show UP, DOWN or EQUALS signs</em></small>",
                                 imageURL: "ui/images/alert-data-icon.png",
                                 argQuestion: "",
                                 settingArgs: []
                             },
                             {
-                                settingText: "<small><em>By changing between 3 colours for higher, lower and equal</em></small>",
+                                settingText: "<small><em>Change between 3 colours for higher, lower and equal</em></small>",
                                 imageURL: "ui/images/alert-data-icon.png",
                                 argQuestion: "Please choose a colour pattern",
                                 settingArgs: [
@@ -217,20 +217,35 @@ function loadDataModel(sensorLabel, boxLabel) {
                         imageURL: "ui/images/continuous-data-icon.png",
                         modeSettings: [
                             {
-                                settingText: "",
+                                settingText: getMove00Text(sensor),
                                 imageURL: "ui/images/alert-data-icon.png",
-                                argQuestion: "",
-                                settingArgs: []
+                                argQuestion: "Please choose the spin direction",
+                                settingArgs: [
+                                    {
+                                        argText: "<small><em>Clockwise</em></small>",
+                                        imageURL: "ui/images/alert-data-icon.png"
+                                    },
+                                    {
+                                        argText: "<small><em>Counterclockwise</em></small>",
+                                        imageURL: "ui/images/alert-data-icon.png"
+                                    }
+                                ]
                             }
                         ]
                     },
                     {
                         modeType: "alert",
                         modeText: getMove1Text(sensor),
-                        imageURL: "",
+                        imageURL: "ui/images/alert-data-icon.png",
                         modeSettings: [
                             {
-                                settingText: "",
+                                settingText: "<small><em>Shake the rotating plate 5 times</em></small>",
+                                imageURL: "ui/images/alert-data-icon.png",
+                                argQuestion: "",
+                                settingArgs: []
+                            },
+                            {
+                                settingText: "<small><em>Do one full clockwise rotation</em></small>",
                                 imageURL: "ui/images/alert-data-icon.png",
                                 argQuestion: "",
                                 settingArgs: []
@@ -243,7 +258,7 @@ function loadDataModel(sensorLabel, boxLabel) {
                         imageURL: "ui/images/relative-data-icon.png",
                         modeSettings: [
                             {
-                                settingText: "",
+                                settingText: "<small><em>Rotate counterclockwise (lower), not at all (equal) and clockwise (higher)</em></small>",
                                 imageURL: "ui/images/alert-data-icon.png",
                                 argQuestion: "",
                                 settingArgs: []
@@ -346,7 +361,7 @@ function getFan0Text(sensor){
 }
 
 function getFan00Text(sensor){
-    return "<small><em>By changing the speed of the fans to show the current <strong>"
+    return "<small><em>Change the speed of the fans to show the current <strong>"
         + sensor + "</strong> level</em></small>";
 }
 
@@ -361,9 +376,9 @@ function getFan2Text(sensor){
 }
 
 function getFan20Text(sensor){
-    return "<small><em>By turning on 1 fan to show higher <strong>"
-    + sensor + "</strong> levels, turning on the other fan to show lower levels"
-    + " and turning both fans off when there is no change</em></small>";
+    return "<small><em>Turn on 1 fan to show higher <strong>"
+    + sensor + "</strong> levels, turn on the other fan to show lower levels"
+    + " and turn both fans off when there is no change</em></small>";
 }
 
 
@@ -376,17 +391,17 @@ function getLight0Text(sensor){
 }
 
 function getLight00Text(sensor){
-    return "<small><em>By turning on different numbers of lights to show the current <strong>"
+    return "<small><em>Turn on different numbers of lights to show the current <strong>"
         + sensor + "</strong> level</em></small>";
 }
 
 function getLight01Text(sensor){
-    return "<small><em>By changing the brightness of lights to show the current <strong>"
+    return "<small><em>Change the brightness of lights to show the current <strong>"
         + sensor + "</strong> level</em></small>";
 }
 
 function getLight02Text(sensor){
-    return "<small><em>By morphing between 2 colours to show the current <strong>"
+    return "<small><em>Morph between 2 colours to show the current <strong>"
         + sensor + "</strong> level</em></small>";
 }
 
@@ -413,6 +428,11 @@ function getMove0Text(sensor){
         + sensor + "</strong> level is changing constantly</em></small>";
 }
 
+function getMove00Text(sensor){
+    return "<small><em>Spin at different speeds to show the current <strong>"
+        + sensor + "</strong> level</em></small>"
+}
+
 function getMove1Text(sensor){
     return "<small><em>Alert when the <strong>"
         + sensor + "</strong> goes above or below some level</em></small>";
@@ -433,12 +453,12 @@ function getBuzz0Text(sensor){
 }
 
 function getBuzz00Text(sensor){
-    return "<small><em>By turning on different numbers of vibrators to show the current <strong>"
+    return "<small><em>Turn on different numbers of vibrators to show the current <strong>"
         + sensor + "</strong> level</em></small>";
 }
 
 function getBuzz01Text(sensor){
-    return "<small><em>By changing the vibration speed to show the current <strong>"
+    return "<small><em>Change the vibration speed to show the current <strong>"
         + sensor + "</strong> level</em></small>";
 }
 
@@ -453,6 +473,6 @@ function getBuzz2Text(sensor){
 }
 
 function getBuzz20Text(sensor){
-    return "<small><em>By vibrating faster when higher, slower when lower and not at all when<strong>"
+    return "<small><em>Vibrate faster when higher, slower when lower and not at all when<strong>"
         + sensor + "</strong> levels stay the same</em></small>";
 }

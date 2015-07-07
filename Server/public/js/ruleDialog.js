@@ -105,12 +105,12 @@ function getSetting(){
                 + current_settings[0].settingText;
 
             //if mode is of type 'alert' - add slider
-            if (current_data_mode.modeType == "alert") {
+            if (current_data_mode == "alert") {
 
                 //add slider
                 html = html
                     + "<br><br>"
-                    + "<h5>At what " + sensor.label + " level would you like the " + box.label + " box to alert?</h5>"
+                    + "<h5>When would you like the " + box.label + " box to do this?</h5>"
                     + "<b>Low</b><input id='alertSlider' data-slider-id='alertLevelSlider' type='text' "
                     + "data-slider-min='0' data-slider-max='10' data-slider-step='1' "
                     + "data-slider-value='5' data-slider-tooltip='hide'/>"
@@ -139,22 +139,34 @@ function getSetting(){
             html = html+"</div>";
 
             //if mode is of type 'alert' - add slider
-            if (current_data_mode.modeType == "alert") {
+            if (current_data_mode == "alert") {
 
                 //add slider
                 html = html
-                    + "<br><br>"
-                    + "<h5>At what " + sensor.label + " level would you like the " + box.label + " box to alert?</h5>"
-                    + "<b>Low</b><input id='alertSlider' data-slider-id='alertLevelSlider' type='text' "
+                    + "<br>"
+                    + "<h5>When would you like the " + box.label + " box to do this?</h5>"
+                    + "<p>When " + sensor.label + " levels are...</p>"
+
+                    + "<div class='btn-group' role='group' aria-label='...'>"
+                    + "<button type='button' class='btn btn-default'>Less than</button>"
+                    + "<button type='button' class='btn btn-default'>Equal to</button>"
+                    + "<button type='button' class='btn btn-default'>Greater than</button>"
+                    + "</div>"
+
+                    + "<p><br>this level:</p>"
+                    + "<b>Low  </b>"
+                    + "<input id='alertSlider' style='width: 400px;' type='text'"
                     + "data-slider-min='0' data-slider-max='10' data-slider-step='1'"
-                    + "data-slider-value='5' data-slider-tooltip='hide'/>"
-                    + "<b>High</b>";
+                    + "data-slider-value='5' data-slider-tooltip='hide' width='500'/>"
+                    + "<b>  High</b>";
+
+                //data-slider-id='alertLevelSlider'
 
             }
 
             //initialise and display the setting modal
             $("#settingQuestion").html(
-                "How would you like the " + box + " box to do this?"
+                "How would you like the " + box.label + " box to do this?"
             );
             $("#settingOptions").html(html);
             $("#settingMessage").html('');
