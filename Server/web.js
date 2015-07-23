@@ -230,12 +230,12 @@ function RunRule(rule){
 
                     //Calculate the relative distance: 0: decrease, 1: same, 2: increase
                     GetRelativeDistanceFromSensorOfSck(rule.smartSensor,sckId,function(relativeMove){
-                        if(relativeMove == 0 || relativeMove ==2)
-                        {
+                        //if(relativeMove == 0 || relativeMove ==2)
+                        //{
                             //Todo: only increase or decrease, or also send "same"??????
                             if(!debug.disablePhysikitCalls)
                                 UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,relativeMove);
-                        }
+                        //}
                     });
                     break;
                 case "1":

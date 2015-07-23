@@ -7,17 +7,25 @@
    color:white;
 }
 
+.ui-state-active a, .ui-state-hover a, .ui-state-visited a, .ui-state-focus a  {
+   outline: none;
+}
+
 ul.nav li.dropdown:hover ul.dropdown-menu {
    display: block;
 }
 
-#tab-background{
-   background-image: url(../ui/images/backgroundA.png);
-   background-repeat: no-repeat;
-   height:470px;
-   width:400px;"
+*:focus {
+   outline: 0 !important;
 }
 
+#tab-background{
+   background-image: url(../ui/sketches/house1.jpg);
+   background-size: 400px 470px;
+   background-repeat: no-repeat;
+   height:470px;
+   width:400px;
+}
 
 
 

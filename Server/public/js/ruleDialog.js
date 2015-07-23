@@ -108,13 +108,7 @@ function getSetting(){
             if (current_data_mode == "alert") {
 
                 //add slider
-                html = html
-                    + "<br><br>"
-                    + "<h5>When would you like the " + box.label + " box to do this?</h5>"
-                    + "<b>Low</b><input id='alertSlider' data-slider-id='alertLevelSlider' type='text' "
-                    + "data-slider-min='0' data-slider-max='10' data-slider-step='1' "
-                    + "data-slider-value='5' data-slider-tooltip='hide'/>"
-                    + "<b>High</b>";
+                html = html + getSliderHtml();
 
             }
             $("#settingQuestion").html('');
@@ -142,26 +136,7 @@ function getSetting(){
             if (current_data_mode == "alert") {
 
                 //add slider
-                html = html
-                    + "<br>"
-                    + "<h5>When would you like the " + box.label + " box to do this?</h5>"
-                    + "<p>When " + sensor.label + " levels are...</p>"
-
-                    + "<div class='btn-group' role='group' aria-label='...'>"
-                    + "<button type='button' class='btn btn-default'>Less than</button>"
-                    + "<button type='button' class='btn btn-default'>Equal to</button>"
-                    + "<button type='button' class='btn btn-default'>Greater than</button>"
-                    + "</div>"
-
-                    + "<p><br>this level:</p>"
-                    + "<b>Low  </b>"
-                    + "<input id='alertSlider' style='width: 400px;' type='text'"
-                    + "data-slider-min='0' data-slider-max='10' data-slider-step='1'"
-                    + "data-slider-value='5' data-slider-tooltip='hide' width='500'/>"
-                    + "<b>  High</b>";
-
-                //data-slider-id='alertLevelSlider'
-
+                html = html + getSliderHtml();
             }
 
             //initialise and display the setting modal
@@ -185,6 +160,12 @@ function getArgs(){
         var tmpIndex = $("input[name='settingRadio']:checked").val();
         if(tmpIndex != undefined){
             newRule.settingIndex = tmpIndex;
+        }
+
+        //read alert button value from setting modal if it exists
+        var tmpButton = $("input[name='sliderButtons']:checked").val();
+        if(tmpButton != undefined){
+            newRule.buttonVal = tmpButton;
         }
 
         //read alert slider value from setting modal if it exists
@@ -240,6 +221,17 @@ function finaliseRule(){
 
 function storeNewRule(){
 
+    //build condition string
+    var condition="";
+    if(newRule.modeIndex == 0){
+        condition = "m";
+    }else if(newRule.modeIndex == 1){
+        var threshold = sensor.sliderVals[newRule.sliderVal-1];
+        condition = "a"+ newRule.buttonVal + threshold;
+    }else if(newRule.modeIndex == 2){
+        condition = "r";
+    }
+
     //push rule to server
     Send(
         box.name,
@@ -248,14 +240,11 @@ function storeNewRule(){
         newRule.modeIndex,
         newRule.settingIndex,
         newRule.argIndex,
-        0  //TODO: check if value is needed
+        condition
     );
 
     console.log("New rule sent to database: " +box.name+", "+sensor.name+", "+newRule.sensorLoc+" -> "
-        +newRule.modeIndex+"-"+newRule.settingIndex+"-"+newRule.argIndex);
-    //if(newRule.sliderVal > -1){
-      //  console.log("sliderVal = "+newRule.sliderVal);
-    //}
+        +newRule.modeIndex+"-"+newRule.settingIndex+"-"+newRule.argIndex+", "+condition);
 
     //close all modals
     closeAllModals();
@@ -327,4 +316,38 @@ function validatedArgs(){
 
 function isEmpty( el ){
     return !$.trim(el.html())
+}
+
+function getSliderHtml(){
+
+    return "<br>"
+    + "<h5>When would you like the " + box.label + " box to do this?</h5>"
+    + "<p>When " + sensor.label + " levels are...</p>"
+
+    + "<div class='btn-group' data-toggle='buttons'>"
+    + "<label class='btn btn-primary active'>"
+    + "<input type='radio' name='sliderButtons' value='<' checked=''>Less than</label>"
+    + "<label class='btn btn-primary'>"
+    + "<input type='radio' name='sliderButtons' value='='>Equal to</label>"
+    + "<label class='btn btn-primary'>"
+    + "<input type='radio' name='sliderButtons' value='>'>Greater than</label>"
+    + "</div>"
+
+    + "<p><br>this level:</p>"
+
+    + "<table><tr>"
+    + "<td width='40'><b>Low</b></td>"
+    + "<td><input id='alertSlider' style='width: 400px;' type='text'"
+    + "data-slider-min='1' data-slider-max='5' data-slider-step='1'"
+    + "data-slider-value='1' data-slider-tooltip='hide' width='500'/></td>"
+    + "<td width='40' align='right'><b>High</b></td></tr>"
+    + "<tr><td colspan='3' align='center'>"
+    + "<table><tr>"
+    + "<td width='96' align='center'>"+ sensor.sem1 +"</td>"
+    + "<td width='96' align='center'>"+ sensor.sem2 +"</td>"
+    + "<td width='96' align='center'>"+ sensor.sem3 +"</td>"
+    + "<td width='96' align='center'>"+ sensor.sem4 +"</td>"
+    + "<td width='96' align='center'>"+ sensor.sem5 +"</td>"
+    + "</tr></table>"
+    + "</td></tr></table>";
 }
