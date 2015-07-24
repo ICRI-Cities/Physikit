@@ -301,19 +301,19 @@ function loadDataModel(sensorLabel, boxLabel) {
                                 settingArgs: [
                                     {
                                         argText: "<small><em>Little vibrations</em></small>",
-                                        imageURL: "ui/sketches/light3b_1.png"
+                                        imageURL: "ui/sketches/vibe2a.png"
                                     },
                                     {
                                         argText: "<small><em>Medium vibrations</em></small>",
-                                        imageURL: "ui/sketches/light3b_1.png"
+                                        imageURL: "ui/sketches/vibe2b.png"
                                     },
                                     {
                                         argText: "<small><em>Big vibrations</em></small>",
-                                        imageURL: "ui/sketches/light3b_1.png"
+                                        imageURL: "ui/sketches/vibe2c.png"
                                     },
                                     {
                                         argText: "<small><em>Huge vibrations</em></small>",
-                                        imageURL: "ui/sketches/light3b_1.png"
+                                        imageURL: "ui/sketches/vibe2d.png"
                                     }
                                 ]
                             }
