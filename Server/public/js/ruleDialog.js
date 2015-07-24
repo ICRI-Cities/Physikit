@@ -221,6 +221,10 @@ function finaliseRule(){
 
 function storeNewRule(){
 
+    //show progress bar modal
+    $("#waitText").html("Storing new connection...");
+    $("#confirmModal").modal();
+
     //build condition string
     var condition="";
     if(newRule.modeIndex == 0){
@@ -245,10 +249,8 @@ function storeNewRule(){
 
     console.log("New rule sent to database: " +box.name+", "+sensor.name+", "+newRule.sensorLoc+" -> "
         +newRule.modeIndex+"-"+newRule.settingIndex+"-"+newRule.argIndex+", "+condition);
-
-    //close all modals
-    closeAllModals();
 }
+
 
 function closeAllModals(){
     $("#confirmModal").modal("hide");

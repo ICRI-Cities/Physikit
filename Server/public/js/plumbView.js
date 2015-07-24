@@ -186,6 +186,10 @@ function initialisePlumb() {
             var sensorData = window.common.getSensorById(sensorID);
             var sensorName = sensorData.name;
 
+            //show progress bar modal
+            $("#waitText").html("Deleting connection...");
+            $("#confirmModal").modal();
+
             //remove rule from server database
             RemoveRule(sensorName, boxName);
         });

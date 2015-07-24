@@ -298,11 +298,15 @@ function HandleRuleMessage(rule) {
 
 //Handles message to update UI for new rules
 function HandleNewRuleMessage(rule){
+
     //draw jsPlumb connection to represent new rule
     drawConnection(rule.cube, rule.smartSensor, rule.sensorLoc);
 
     //update popover with content for new connection
     updatePopContent(rule.cube, rule.smartSensor, rule.sensorLoc, rule.mode, rule.setting, rule.args);
+
+    //close all modals that might be open
+    closeAllModals();
 }
 
 
@@ -316,6 +320,9 @@ function HandleRemoveMessage(rule){
 
     //reset popover content
     resetPopContent(rule.cube);
+
+    //close all modals that might be open
+    closeAllModals();
 }
 
 
