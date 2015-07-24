@@ -9,18 +9,28 @@
 var Keys = function(){
     this.smartCitizenKit1 = {
         token:"a84d28b66e96ebdae9115007d4af2199b226c1fa",
-        deviceId: 2165,
+        deviceId: 2398,
         id:1
     };
     this.smartCitizenKit2 = {
         token:"a84d28b66e96ebdae9115007d4af2199b226c1fa",
-        deviceId: 2275,
+        deviceId: 2399,
         id:2
     };
     this.smartCitizenKit3 = {
         token:"a84d28b66e96ebdae9115007d4af2199b226c1fa",
-        deviceId: 2278,
+        deviceId: 2400,
         id:3
+    };
+    this.smartCitizenKit4 = {
+        token:"a84d28b66e96ebdae9115007d4af2199b226c1fa",
+        deviceId: 2401,
+        id:4
+    };
+    this.smartCitizenKit5 = {
+        token:"a84d28b66e96ebdae9115007d4af2199b226c1fa",
+        deviceId: 2402,
+        id:5
     };
     this.databaseUrl ='mongodb://physikit:physikit@ds031942.mongolab.com:31942/physikit';
 

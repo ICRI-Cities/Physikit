@@ -705,6 +705,9 @@ function AddRule(rule,callback){
                     //Add new rule or replace if exist
                     ruleResult == undefined ? db.Add("rules",rule):db.Replace("rules",rule,"_id",ruleResult._id);
 
+                    //send update event of new rule
+                    io.to(rule.id).emit('newRule',rule);
+
                     //Run the new rule
                     RunRule(rule);
 
