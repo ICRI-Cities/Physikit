@@ -231,7 +231,7 @@ function storeNewRule(){
         condition = "m";
     }else if(newRule.modeIndex == 1){
         var threshold = sensor.sliderVals[newRule.sliderVal-1];
-        condition = "a"+ newRule.buttonVal + threshold;
+        condition = newRule.buttonVal + threshold;
     }else if(newRule.modeIndex == 2){
         condition = "r";
     }
