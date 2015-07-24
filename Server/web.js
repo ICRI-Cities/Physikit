@@ -107,7 +107,7 @@ app.post('/api/getLoginLocation', function(req,res){
 /**
  * All the smart citizen kits
  */
-var kit = new SmartCitizenKitCollection([keys.smartCitizenKit1,keys.smartCitizenKit2, keys.smartCitizenKit3]);
+var kit = new SmartCitizenKitCollection([keys.smartCitizenKit1,keys.smartCitizenKit2, keys.smartCitizenKit3,keys.smartCitizenKit4,keys.smartCitizenKit5]);
 
 //When new data is received
 kit.on('DataReceived', function(id,data) {
@@ -121,11 +121,6 @@ kit.on('DataReceived', function(id,data) {
     //Since we have new data, we need to run all rules
     RunRules("Smart Citizen kit "+id+" reported new data.");
 });
-
-
-
-var sparks = [];
-
 
 
 
@@ -766,6 +761,8 @@ function RemoveRule(rule,callback){
                     //Remove rule if exists
                     if (ruleResult != undefined) {
                         db.Remove("rules", rule);
+
+                        UpdatePhysikit(rule.id,rule.cube,0,0,0,0);
 
                         io.to(rule.id).emit('remove',rule);
                     }
