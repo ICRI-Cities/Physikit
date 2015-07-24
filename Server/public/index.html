@@ -188,6 +188,7 @@
                 <p id="settingMessage"></p>
                 <div id="settingOptions"></div>
                 <input type="hidden" name="sliderVal" value=""/>
+                <input type="hidden" name="buttonVal" value=""/>
                 <div id="settingError"></div>
             </div>
             <div class="modal-footer">
@@ -218,7 +219,23 @@
     </div>
 </div>
 
-    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModal" aria-hidden="true">
+    <div class="modal fade" id="confirmModal" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="waitText"></h5>
+                </div>
+                <div class="modal-body">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModal" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -233,7 +250,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div-->
 
 
 

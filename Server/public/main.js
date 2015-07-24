@@ -92,10 +92,15 @@ function connect_socket (id,token) {
         HandlePhysikitMessage(source,msg);
     });
 
-    //Handles "rules" messages related to new rules
-    //updates send by our app over socket.io
+    //Handles "rules" messages related to rules execution
     socket.on('rule',function(rule){
         HandleRuleMessage(rule);
+    });
+
+    //Handles "newRule" messages related to the creation of a new rule
+    //Updates sent by our app over socket.io
+    socket.on('newRule', function(rule){
+        HandleNewRuleMessage(rule);
     });
 
     //Handles "remove" messages related to rule deletion
@@ -125,7 +130,7 @@ function connect_socket (id,token) {
 //mode: 0-9
 //setting: 0-9
 //value: 0-9
-function Send(cube,sensor,sensorLoc,mode,setting,args,value){
+function Send(cube,sensor,sensorLoc,mode,setting,args,condition){
     var data =
     {
         type: "rule",
@@ -134,11 +139,11 @@ function Send(cube,sensor,sensorLoc,mode,setting,args,value){
         smartId :$.cookie("physikit"),
         sensorLoc: sensorLoc,
         cube : cube,
-        condition : "m",
+        condition : condition,
         mode : mode,
         setting : setting,
         args : args,
-        value : value
+        value : 0
     };
     socket.emit('rule',data);
 }
@@ -227,12 +232,18 @@ $(document).ready(function() {
 
     //initialise sliders when modal shown
     $('#settingModal').on('shown.bs.modal', function (e) {
-        //initialise slider
+
+        //initialise sliderVal
+        $('input:hidden[name=sliderVal]').val(1);
+
+        //handle slides
         $('#alertSlider').slider()
             .on('slideStop', function(ev){
                 $('input:hidden[name=sliderVal]').val(ev.value);
+                //console.log("sliderVal = "+ev.value);
             });
     });
+
 
     //Initialize accordion
     /*$("#accordion").accordion({
@@ -256,22 +267,37 @@ function HandleSmartCitizenMessage(id,data){
         //console.log(data);
         $("#sc").html(
             "<strong><span style='color: #00ff00'>Connected</span></strong>"
-            /*"You are currently connected to a device named "
+        );
+
+        console.log(
+            "You are currently connected to a device named "
             + data.device.title
             + " that is located in "
             + data.device.location
-            + ". "
-            + "The temperature in <strong><span style='color: #ff0000'>"
-            + data.device.location
-            + "</span></strong> is currently "
-            + data.device.posts[0].temp + " and the co level is "
-            + data.device.posts[0].co + "."*/
-            );
+            + ". \n"
+            + "Temperature: "
+            + data.device.posts[0].temp + "\n "
+            + "Humidity: "
+            + data.device.posts[0].hum + "\n"
+            + "CO: "
+            + data.device.posts[0].co + "\n"
+            + "NO2: "
+            + data.device.posts[0].no2 +"\n"
+            + "Light: "
+            + data.device.posts[0].light +"\n"
+            + "Noise: "
+            + data.device.posts[0].noise
+        );
 }
 
-//Handles Physikit Messages
-function HandleRuleMessage(rule){
+//Handles messages about rule execution
+function HandleRuleMessage(rule) {
     //console.log("kit "+ rule.cube + " cube message: "+JSON.stringify(rule));
+}
+
+
+//Handles message to update UI for new rules
+function HandleNewRuleMessage(rule){
 
     //draw jsPlumb connection to represent new rule
     drawConnection(rule.cube, rule.smartSensor, rule.sensorLoc);
@@ -279,24 +305,10 @@ function HandleRuleMessage(rule){
     //update popover with content for new connection
     updatePopContent(rule.cube, rule.smartSensor, rule.sensorLoc, rule.mode, rule.setting, rule.args);
 
-    //var checkState = (rule.value > 0);
-
-    /*if(rule.mode == 0){
-        if($('#'+rule.cube +'Checkbox').get(0).checked != checkState)
-        {
-            $('#'+rule.cube +'Checkbox').bootstrapSwitch("state",checkState,true);
-            HandleMainSwitch(rule.cube ,checkState,false);
-        }
-        else{
-            $('#'+rule.cube +'Slider').slider('value', rule.value);
-            $('#'+rule.cube +'SliderValue').text(rule.value);
-        }
-    }else if(rule.mode ==1){
-        if($('#'+rule.cube +'AlertCheckbox').get(0).checked !=  checkState)
-        $('#'+rule.cube +'AlertCheckbox').bootstrapSwitch("state",checkState,true);
-        HandleSecondarySwitch(rule.cube,checkState,false);
-    }*/
+    //close all modals that might be open
+    closeAllModals();
 }
+
 
 //Handles Rule removal messages
 function HandleRemoveMessage(rule){
@@ -308,6 +320,9 @@ function HandleRemoveMessage(rule){
 
     //reset popover content
     resetPopContent(rule.cube);
+
+    //close all modals that might be open
+    closeAllModals();
 }
 
 
@@ -346,6 +361,8 @@ function assignTabs(){
                         $("#tab3-label").html(locations[2].label);
                         $("#tab4-label").html(locations[3].label);
                         $("#tab5-label").html(locations[4].label);
+                        var url = locations[0].background;
+                        $("#tab-background").css("background-image", "url("+url+")");
                         break;
                     case 1: $("#tab-one").val(locations[1].name);
                         $("#tab-two").val(locations[0].name);
@@ -357,6 +374,8 @@ function assignTabs(){
                         $("#tab3-label").html(locations[2].label);
                         $("#tab4-label").html(locations[3].label);
                         $("#tab5-label").html(locations[4].label);
+                        var url = locations[1].background;
+                        $("#tab-background").css("background-image", "url("+url+")");
                         break;
                     case 2: $("#tab-one").val(locations[2].name);
                         $("#tab-two").val(locations[0].name);
@@ -368,6 +387,8 @@ function assignTabs(){
                         $("#tab3-label").html(locations[1].label);
                         $("#tab4-label").html(locations[3].label);
                         $("#tab5-label").html(locations[4].label);
+                        var url = locations[2].background;
+                        $("#tab-background").css("background-image", "url("+url+")");
                         break;
                     case 3: $("#tab-one").val(locations[3].name);
                         $("#tab-two").val(locations[0].name);
@@ -379,6 +400,8 @@ function assignTabs(){
                         $("#tab3-label").html(locations[1].label);
                         $("#tab4-label").html(locations[2].label);
                         $("#tab5-label").html(locations[4].label);
+                        var url = locations[3].background;
+                        $("#tab-background").css("background-image", "url("+url+")");
                         break;
                     case 4: $("#tab-one").val(locations[4].name);
                         $("#tab-two").val(locations[0].name);
@@ -390,6 +413,8 @@ function assignTabs(){
                         $("#tab3-label").html(locations[1].label);
                         $("#tab4-label").html(locations[2].label);
                         $("#tab5-label").html(locations[3].label);
+                        var url = locations[4].background;
+                        $("#tab-background").css("background-image", "url("+url+")");
                         break;
                     default: console.log("tabs not assigned!");
                         return;

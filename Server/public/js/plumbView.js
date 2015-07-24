@@ -186,38 +186,13 @@ function initialisePlumb() {
             var sensorData = window.common.getSensorById(sensorID);
             var sensorName = sensorData.name;
 
+            //show progress bar modal
+            $("#waitText").html("Deleting connection...");
+            $("#confirmModal").modal();
+
             //remove rule from server database
             RemoveRule(sensorName, boxName);
         });
-
-        // make all the window divs draggable
-        //instance.draggable(jsPlumb.getSelector(".flowchart-demo .window"), { grid: [20, 20] });
-        // THIS DEMO ONLY USES getSelector FOR CONVENIENCE. Use your library's appropriate selector
-        // method, or document.querySelectorAll:
-        //jsPlumb.draggable(document.querySelectorAll(".window"), { grid: [20, 20] });
-
-        // connect a few up
-        //instance.connect({uuids: ["sc-coRightMiddle", "pk-fanLeftMiddle"], editable: true});
-        //
-        // listen for clicks on connections, and offer to delete connections on click.
-        //
-        /*instance.bind("click", function (conn, originalEvent) {
-           // if (confirm("Delete connection from " + conn.sourceId + " to " + conn.targetId + "?"))
-             //   instance.detach(conn);
-            conn.toggleType("basic");
-        });
-
-        instance.bind("connectionDrag", function (connection) {
-            console.log("connection " + connection.id + " is being dragged. suspendedElement is ", connection.suspendedElement, " of type ", connection.suspendedElementType);
-        });
-
-        instance.bind("connectionDragStop", function (connection) {
-            console.log("connection " + connection.id + " was dragged");
-        });
-
-        instance.bind("connectionMoved", function (params) {
-            console.log("connection " + params.connection.id + " was moved");
-        });*/
     });
 
     //get existing connections from database and handle in callback
