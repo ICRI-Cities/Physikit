@@ -145,6 +145,7 @@ function RunRulesByClient(reason, id){
                 list.forEach(function (rule) {
                     //Run rule
                     RunRule(rule);
+                    io.to(rule.id).emit('newRule',rule);
                 });
 
                 if(debug.details) debug.spacer();
@@ -608,8 +609,7 @@ io.on('connection', function(socket){
 
     //New rule message received from client
     socket.on('rule',function(data){
-        console.log("add request");
-        //Add a new rule that we received
+               //Add a new rule that we received
         AddRule(data,function(result){});
     });
 
