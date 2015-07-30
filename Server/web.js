@@ -213,9 +213,11 @@ function RunRule(rule){
                             //Map the value to Physikit Space
                             var mappedValue = valueOfSensor.map(sensorRange.min,sensorRange.max,0,255);
 
+                            var convertedValue = Math.ceil(mappedValue);
+
                             //Execute Physikit command
                             if(!debug.disablePhysikitCalls)
-                                UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,mappedValue);
+                                UpdatePhysikit(rule.id,rule.cube,rule.mode,rule.setting,rule.args,convertedValue);
                         }
                     });
                     break;
@@ -482,7 +484,7 @@ function Find(collection,fieldName,entity, callback){
  * @param callback - the callback function to handle results
  * @constructor
  */
-function FindRule(id,cubeName,callback){
+function FindRule(id,cubeName,sensor,callback){
 
     //Find the user
     FindUser(id, function (result) {
@@ -499,7 +501,7 @@ function FindRule(id,cubeName,callback){
             list.forEach(function (rule) {
 
                 //If there is a rule for the cube, send it back
-                if(rule.cube == cubeName ){
+                if(rule.cube == cubeName || rule.smartSensor == sensor){
                     callback(rule);
                     found= true;
                     return;
@@ -689,7 +691,7 @@ function AddRule(rule,callback){
         }
 
         //Check if rule exists for this cube
-        FindRule(rule.id,rule.cube,function(ruleResult){
+        FindRule(rule.id,rule.cube,rule.smartSensor,function(ruleResult){
 
             //Check if requested cube exist
             if(PhysikitCubeExist(rule.cube)){
@@ -750,7 +752,7 @@ function RemoveRule(rule,callback){
         }
 
         //check if requested rule exists for this cube
-        FindRule(rule.id, rule.cube, function (ruleResult) {
+        FindRule(rule.id, rule.cube, rule.smartSensor, function (ruleResult) {
 
             //Check if requested cube exist
             if(PhysikitCubeExist(rule.cube)){
