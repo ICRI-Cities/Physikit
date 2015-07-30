@@ -208,7 +208,7 @@ function RunRulesBySck(reason,id){
 
             if(rule.sensorLoc == loc){
 
-                console.log("Running rule: "+JSON.stringify(rule)+" for kit:"+id);
+                debug.log("Running rule: "+JSON.stringify(rule)+" for kit:"+id,"Rule Engine");
                 //Run rule
                 RunRule(rule);
             }
@@ -579,6 +579,7 @@ io.on('connection', function(socket){
     //On new websocket connect, we need to check if user exists in db
     FindUser(socket.client.request._query.id, function (result) {
 
+        console.log(JSON.stringify(result));
         //No user
         if (result == "") {
             return;
@@ -605,7 +606,7 @@ io.on('connection', function(socket){
 
         //Since we have a new connection, let's run the rules
         //to make sure we're updated
-        RunRulesByClient("Client connected",socket.client.request._query.id);
+        RunRulesByClient("Client connected",result[0].id);
 
     });
 
