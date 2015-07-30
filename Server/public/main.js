@@ -194,8 +194,6 @@ $(document).ready(function() {
     else
         Login(url,cookieValue);
 
-    initialisePlumb();
-
     //JQUERY
     //initialise popovers
     $('[data-toggle="popover"]').popover({ html : true });
@@ -275,44 +273,5 @@ function HandleRemoveMessage(rule){
 //Handles Identifier login message
 function HandleIdentifierMessage(identifier){
     assignTabs(identifier);
+    initialisePlumb();
 }
-
-
-
-
-
-
-
-
-
-//initialise content on login based on existing rules
-/*function initialisePopContent(identifier){
-
- //get existing rules for this user
- getExistingConnections(function(connectionList){
- for(var i=0; i<connectionList.length; i++) {
- var nextConnection = connectionList[i];
-
- var cubeName = nextConnection.cube;
- var sensorName = nextConnection.smartSensor;
- var locationName = nextConnection.sensorLoc;
-
- if (cubeName != undefined) {
- if (sensorName != undefined) {
- if (locationName != undefined) {
-
- var mode = nextConnection.mode;
- var setting = nextConnection.setting;
- var arg = nextConnection.args;
-
- updatePopContent(cubeName, sensorName, locationName, mode, setting, arg);
-
- }
- }
- }
- }
- });
- }else{
- console.log("cookie value is undefined: "+cookieValue);
- }
- }*/
