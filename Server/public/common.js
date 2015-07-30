@@ -36,8 +36,8 @@
             sem1:"Commercial kitchen",  //at 0.06 ppm
             sem2:"Average roadside",  //at 0.08 ppm
             sem3:"London city centre road junction",  //at 0.12 ppm
-            sem4:"Recommended less than 4 hours exposure",  //at 0.25 ppm
-            sem5:"Recommended less than 1 hour exposure"}, //at 1 ppm
+            sem4:"No more than 4 hours exposure",  //at 0.25 ppm
+            sem5:"No more than 1 hour exposure"}, //at 1 ppm
 
         {id: "sc-light", name: "light", label: "Light", min:0, max:40000,
             sliderVals:[5,300,500,5000,30000],
