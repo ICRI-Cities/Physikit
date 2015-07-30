@@ -15,12 +15,12 @@ var newRule = {
     sliderVal: -1
 };
 
-function startDialogs(sensorData, sensorLoc, boxData){
-    sensor = sensorData;
-    box = boxData;
+function startDialogs(sensorID, sensorLoc, boxID){
+    sensor = window.common.getSensorById(sensorID); //read in sensor details
+    box = window.common.getCubeById(boxID); //read in cube details
 
     //load data model with the sensor name
-    loadDataModel(sensorData.label, boxData.label);
+    loadDataModel(sensor.label, box.label);
 
     //reset rule
     newRule.sensorLoc = sensorLoc;
@@ -221,9 +221,8 @@ function finaliseRule(){
 
 function storeNewRule(){
 
-    //show progress bar modal
-    $("#waitText").html("Storing new connection...");
-    $("#confirmModal").modal();
+    closeAllModals();
+    showProgressBar("Storing new connection...");
 
     //build condition string
     var condition="";
@@ -251,9 +250,16 @@ function storeNewRule(){
         +newRule.modeIndex+"-"+newRule.settingIndex+"-"+newRule.argIndex+", "+condition);
 }
 
+function showProgressBar(message){
+    $("#waitText").html(message);
+    $("#confirmModal").modal();
+}
+
+function hideProgressBar(){
+    $("#confirmModal").modal("hide");
+}
 
 function closeAllModals(){
-    $("#confirmModal").modal("hide");
     $("#argModal").modal("hide");
     $("#settingModal").modal("hide");
     $("#modeModal").modal("hide");

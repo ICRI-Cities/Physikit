@@ -591,7 +591,7 @@ io.on('connection', function(socket){
 
         //Put socket into a separate channel for that id, so we don't do cross-talk across
         //several groups of clients
-        socket.join(socket.client.request._query.id)
+        socket.join(socket.client.request._query.id);
 
         socket.emit("identifier",result[0].name);
 
