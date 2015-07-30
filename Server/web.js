@@ -605,7 +605,7 @@ io.on('connection', function(socket){
 
         //Since we have a new connection, let's run the rules
         //to make sure we're updated
-        RunRulesByClient("Client connected",result.id);
+        RunRulesByClient("Client connected",socket.client.request._query.id);
 
     });
 
