@@ -16,11 +16,12 @@
  * @param value - the value of Physikit cube
  * @constructor
  */
-function Rule(type,id,smartId,smartSensor,cube,condition,mode,setting,args,value){
+function Rule(type,id,smartId,smartSensor,sensorLoc,cube,condition,mode,setting,args,value){
     this.type = type;
     this.id = id;
     this.smartSensor =  smartSensor;
     this.smartId = smartId;
+    this.sensorLoc = sensorLoc,
     this.cube = cube;
     this.condition = condition;
     this.mode = mode;

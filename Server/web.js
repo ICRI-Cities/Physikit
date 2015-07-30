@@ -484,7 +484,7 @@ function Find(collection,fieldName,entity, callback){
  * @param callback - the callback function to handle results
  * @constructor
  */
-function FindRule(id,cubeName,sensor,callback){
+function FindRule(id,cubeName,sensor,loc,callback){
 
     //Find the user
     FindUser(id, function (result) {
@@ -501,7 +501,7 @@ function FindRule(id,cubeName,sensor,callback){
             list.forEach(function (rule) {
 
                 //If there is a rule for the cube, send it back
-                if(rule.cube == cubeName || rule.smartSensor == sensor){
+                if(rule.cube == cubeName || (rule.smartSensor == sensor && rule.sensorLoc == loc )){
                     callback(rule);
                     found= true;
                     return;
@@ -579,7 +579,6 @@ io.on('connection', function(socket){
 
     //Rule removed in client
     socket.on('remove', function(data){
-
         //Remove rule from database
         RemoveRule(data,function(result){});
     });
@@ -690,8 +689,9 @@ function AddRule(rule,callback){
             return;
         }
 
+
         //Check if rule exists for this cube
-        FindRule(rule.id,rule.cube,rule.smartSensor,function(ruleResult){
+        FindRule(rule.id,rule.cube,rule.smartSensor,rule.sensorLoc,function(ruleResult){
 
             //Check if requested cube exist
             if(PhysikitCubeExist(rule.cube)){
@@ -751,8 +751,10 @@ function RemoveRule(rule,callback){
             return;
         }
 
+
+
         //check if requested rule exists for this cube
-        FindRule(rule.id, rule.cube, rule.smartSensor, function (ruleResult) {
+        FindRule(rule.id, rule.cube, rule.smartSensor,rule.sensorLoc, function (ruleResult) {
 
             //Check if requested cube exist
             if(PhysikitCubeExist(rule.cube)){
