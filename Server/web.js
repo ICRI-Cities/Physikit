@@ -119,17 +119,72 @@ kit.on('DataReceived', function(id,data) {
     io.emit('smartcitizen',id,data);
 
     //Since we have new data, we need to run all rules
-    RunRules("Smart Citizen kit "+id+" reported new data.");
+    RunRulesBySck("Smart Citizen kit "+id+" reported new data.",id);
 });
 
 
+function RunRulesByClient(reason, id){
+
+    if(debug.details) debug.spacer();
+
+    //Print reason for update
+    if(debug.output)
+        debug.log("Run rules -> "+reason,"Physikit Server");
+
+           //Find the user
+    FindUser(id, function (result) {
+
+        //If user is not null
+        if (result != "") {
+
+            //Find the rules for this user
+            db.FindByField("rules","id",id.toString(),function(list){
+
+                if(debug.details) debug.spacer();
+
+                list.forEach(function (rule) {
+                    //Run rule
+                    RunRule(rule);
+                });
+
+                if(debug.details) debug.spacer();
+            })
+        }
+    });
+}
+
+
+function RunAllRules(reason){
+    //Add a "---" spacer in the console when printing all the details
+    if(debug.details) debug.spacer();
+
+    //Print reason for update
+    if(debug.output)
+        debug.log("Run rules -> "+reason,"Physikit Server");
+
+
+    //Grab all the rules from the DB
+    db.FindAll("rules", function (list) {
+
+        //Add spacer
+        if(debug.details) debug.spacer();
+
+
+        list.forEach(function (rule) {
+
+            RunRule(rule);
+        })
+
+        if(debug.details) debug.spacer();
+    });
+}
 
 /**
  * Runs and executes all rules
  * @param reason - why the rules are being executed
  * @param id - optional filter so we don't execute all rules
  */
-function RunRules(reason,id){
+function RunRulesBySck(reason,id){
 
     //Add a "---" spacer in the console when printing all the details
     if(debug.details) debug.spacer();
@@ -138,47 +193,28 @@ function RunRules(reason,id){
     if(debug.output)
         debug.log("Run rules -> "+reason,"Physikit Server");
 
-    //if value is undefined
-    if(id == undefined) {
 
-        //Grab all the rules from the DB
-        db.FindAll("rules", function (list) {
+    //Grab all the rules from the DB
+    db.FindAll("rules", function (list) {
 
-            //Add spacer
-            if(debug.details) debug.spacer();
+        //Add spacer
+        if(debug.details) debug.spacer();
 
 
-            list.forEach(function (rule) {
+        list.forEach(function (rule) {
+
+            var loc = "family" + id;
+
+            if(rule.sensorLoc == loc){
+
+                console.log("Running rule: "+JSON.stringify(rule)+" for kit:"+id);
                 //Run rule
                 RunRule(rule);
-            })
-
-            if(debug.details) debug.spacer();
-        });
-    }
-    else{
-        //Find the user
-        FindUser(id, function (result) {
-
-            //If user is not null
-            if (result != "") {
-
-                //Find the rules for this user
-                db.FindByField("rules","id",id.toString(),function(list){
-
-                    if(debug.details) debug.spacer();
-
-                    list.forEach(function (rule) {
-
-                        //Run rule
-                        RunRule(rule);
-                    });
-
-                    if(debug.details) debug.spacer();
-                })
             }
-        });
-    }
+        })
+
+        if(debug.details) debug.spacer();
+    });
 }
 
 /**
@@ -566,13 +602,13 @@ io.on('connection', function(socket){
 
         //Since we have a new connection, let's run the rules
         //to make sure we're updated
-        RunRules("Client connected",result.id);
+        RunRulesByClient("Client connected",result.id);
 
     });
 
     //New rule message received from client
     socket.on('rule',function(data){
-
+        console.log("add request");
         //Add a new rule that we received
         AddRule(data,function(result){});
     });
@@ -811,7 +847,7 @@ httpApp.listen(process.env.PORT || 3000, function(){
     if(debug.output)
         debug.log('server running on *:3000',"Physikit Server","Success");
 
-    RunRules("Server started");
+    RunAllRules("Server started");
 });
 
 /**----------------------------------------------------------------------------------------------------------------
