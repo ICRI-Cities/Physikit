@@ -579,7 +579,6 @@ io.on('connection', function(socket){
     //On new websocket connect, we need to check if user exists in db
     FindUser(socket.client.request._query.id, function (result) {
 
-        console.log(JSON.stringify(result));
         //No user
         if (result == "") {
             return;
