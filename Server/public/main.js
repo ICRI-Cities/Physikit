@@ -194,8 +194,6 @@ $(document).ready(function() {
     else
         Login(url,cookieValue);
 
-    initialisePlumb();
-
     //JQUERY
     //initialise popovers
     $('[data-toggle="popover"]').popover({ html : true });
@@ -275,6 +273,7 @@ function HandleRemoveMessage(rule){
 //Handles Identifier login message
 function HandleIdentifierMessage(identifier){
     assignTabs(identifier);
+    initialisePlumb();
 }
 
 
