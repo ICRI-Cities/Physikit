@@ -308,6 +308,7 @@ function HandleRemoveMessage(rule){
 
 //Handles Identifier login message
 function HandleIdentifierMessage(identifier){
+    console.log("got identifier message");
     assignTabs(identifier);
 }
 
