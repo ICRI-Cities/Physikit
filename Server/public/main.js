@@ -150,13 +150,14 @@ function Send(cube,sensor,sensorLoc,mode,setting,args,condition){
 
 //Send remove message to physikit node app
 //triggered by the removal of a connection on the web UI
-function RemoveRule(sensor,cube){
+function RemoveRule(sensor,sensorLoc,cube){
     var data =
     {
         type: "rule",
         id : $.cookie("physikit"),
         smartSensor :  sensor,
         smartId :$.cookie("physikit"),
+        sensorLoc: sensorLoc,
         cube : cube
     };
     socket.emit('remove',data);

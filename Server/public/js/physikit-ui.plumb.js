@@ -176,6 +176,8 @@ function initialisePlumb() {
         });
 
         instance.bind("connectionDetached", function(connInfo, originalEvent){
+            var connection = connInfo.connection;
+
             //reset tab for boxElement
             var boxID = connInfo.targetId;
             var boxData = window.common.getCubeById(boxID);
@@ -191,7 +193,7 @@ function initialisePlumb() {
             $("#confirmModal").modal();
 
             //remove rule from server database
-            RemoveRule(sensorName, boxName);
+            RemoveRule(sensorName, connection.location, boxName);
         });
     });
 
