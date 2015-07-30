@@ -47,28 +47,6 @@ function Login(url,id){
 
 }
 
-//after login complete - initalise jsPlumb connections
-//get rules from database
-/*function getExistingConnections(callback){
- //Check for cookie todo auto login
- var cookieValue = $.cookie("physikit");
- if(cookieValue != undefined){
-
- var data = {};
- data.id = cookieValue;
-
- $.ajax({
- type: 'POST',
- data: JSON.stringify(data),
- contentType: 'application/json',
- url: url+"getConnections/",
- success: function(connectionList) {
- callback(connectionList);
- }
- });
- }
- }*/
-
 //Connect the socket with secret
 function connect_socket (id,token) {
     console.log("Log in response: " + token.token);
@@ -116,9 +94,9 @@ function connect_socket (id,token) {
     });
 
     //Handles "identifier socket.io event
-    socket.on("identifier", function(identifier)){
+    socket.on("identifier", function(identifier){
         HandleIdentifierMessage(identifier);
-    }
+    });
 
     //Problem with token
     socket.on("error", function(error) {
@@ -196,15 +174,6 @@ function SwitchLogin(value,username){
         $("#username").prop('disabled', false);
         $("#loggedOutView").hide();
         $("#loggedInView").show();
-
-        //assign families to tabs based on logged in user
-        assignTabs();
-
-        //initialise content in popovers depending on existing rules for logged in user
-        initialisePopContent();
-
-        //initialise jsPlumb view depending on logged in user
-        initialisePlumb();
     }
 }
 
@@ -225,6 +194,8 @@ $(document).ready(function() {
     else
         Login(url,cookieValue);
 
+    initialisePlumb();
+
     //JQUERY
     //initialise popovers
     $('[data-toggle="popover"]').popover({ html : true });
@@ -232,7 +203,7 @@ $(document).ready(function() {
     //handle tab changes
     $('a[data-toggle="tab"]').on('show.bs.tab', function (e) {
         var activeRef = $(e.target).attr("href");
-        HandleTabChange(activeRef);
+        handleTabChange(activeRef);
     });
 
     //initialise sliders when modal shown
@@ -281,13 +252,11 @@ function HandleRuleMessage(rule) {
 
 //Handles message to update UI for new rules
 function HandleNewRuleMessage(rule){
-
+    console.log("new rule: "+JSON.stringify(rule));
     //draw jsPlumb connection to represent new rule
-    drawConnection(rule.cube, rule.smartSensor, rule.sensorLoc);
-
     //update popover with content for new connection
+    drawConnection(rule.cube, rule.smartSensor, rule.sensorLoc);
     updatePopContent(rule.cube, rule.smartSensor, rule.sensorLoc, rule.mode, rule.setting, rule.args);
-
     hideProgressBar();
 }
 
@@ -295,354 +264,55 @@ function HandleNewRuleMessage(rule){
 //Handles Rule removal messages
 function HandleRemoveMessage(rule){
     //console.log("remove "+ rule.cube + " rule: "+JSON.stringify(rule));
-
     //remove jsplumb connection attached to cube
+    //reset popover content
     var cubeID = window.common.getCubeByName(rule.cube).id;
     deleteConnection(cubeID);
-
-    //reset popover content
     resetPopContent(rule.cube);
-
     hideProgressBar();
 }
 
 //Handles Identifier login message
 function HandleIdentifierMessage(identifier){
-    console.log("got identifier message");
     assignTabs(identifier);
 }
 
 
-//TABS
-//assign location names (families) to tabs based on who has logged in
-function assignTabs(identifier){
-
-    var locations = window.common.locations();
-    var locIndex = window.common.getLocationIndex(identifier);
-
-    //do this statically to ensure consistency
-    switch(locIndex){
-        case 0: $("#tab-one").val(locations[0].name);  //set location name in tab hidden input
-            $("#tab-two").val(locations[1].name);
-            $("#tab-three").val(locations[2].name);
-            $("#tab-four").val(locations[3].name);
-            $("#tab-five").val(locations[4].name);
-            $("#tab1-label").html(locations[0].label); //set labels on tabs
-            $("#tab2-label").html(locations[1].label);
-            $("#tab3-label").html(locations[2].label);
-            $("#tab4-label").html(locations[3].label);
-            $("#tab5-label").html(locations[4].label);
-            var url = locations[0].background;
-            $("#tab-background").css("background-image", "url("+url+")");
-            break;
-        case 1: $("#tab-one").val(locations[1].name);
-            $("#tab-two").val(locations[0].name);
-            $("#tab-three").val(locations[2].name);
-            $("#tab-four").val(locations[3].name);
-            $("#tab-five").val(locations[4].name);
-            $("#tab1-label").html(locations[1].label);
-            $("#tab2-label").html(locations[0].label);
-            $("#tab3-label").html(locations[2].label);
-            $("#tab4-label").html(locations[3].label);
-            $("#tab5-label").html(locations[4].label);
-            var url = locations[1].background;
-            $("#tab-background").css("background-image", "url("+url+")");
-            break;
-        case 2: $("#tab-one").val(locations[2].name);
-            $("#tab-two").val(locations[0].name);
-            $("#tab-three").val(locations[1].name);
-            $("#tab-four").val(locations[3].name);
-            $("#tab-five").val(locations[4].name);
-            $("#tab1-label").html(locations[2].label);
-            $("#tab2-label").html(locations[0].label);
-            $("#tab3-label").html(locations[1].label);
-            $("#tab4-label").html(locations[3].label);
-            $("#tab5-label").html(locations[4].label);
-            var url = locations[2].background;
-            $("#tab-background").css("background-image", "url("+url+")");
-            break;
-        case 3: $("#tab-one").val(locations[3].name);
-            $("#tab-two").val(locations[0].name);
-            $("#tab-three").val(locations[1].name);
-            $("#tab-four").val(locations[2].name);
-            $("#tab-five").val(locations[4].name);
-            $("#tab1-label").html(locations[3].label);
-            $("#tab2-label").html(locations[0].label);
-            $("#tab3-label").html(locations[1].label);
-            $("#tab4-label").html(locations[2].label);
-            $("#tab5-label").html(locations[4].label);
-            var url = locations[3].background;
-            $("#tab-background").css("background-image", "url("+url+")");
-            break;
-        case 4: $("#tab-one").val(locations[4].name);
-            $("#tab-two").val(locations[0].name);
-            $("#tab-three").val(locations[1].name);
-            $("#tab-four").val(locations[2].name);
-            $("#tab-five").val(locations[3].name);
-            $("#tab1-label").html(locations[4].label);
-            $("#tab2-label").html(locations[0].label);
-            $("#tab3-label").html(locations[1].label);
-            $("#tab4-label").html(locations[2].label);
-            $("#tab5-label").html(locations[3].label);
-            var url = locations[4].background;
-            $("#tab-background").css("background-image", "url("+url+")");
-            break;
-        default: console.log("tabs not assigned!");
-            return;
-    }
-    //set active tab
-    $( "#location_tabs" ).tabs().tabs({ active: 0 });
-}
-
-
-//get the currently active tab and return the location
-//associated with this tab
-function getActiveLocation(){
-    var tabIndex = $("#location_tabs").tabs('option', 'active');
-    switch(tabIndex){
-        case 0: return $("#tab-one").val();
-        case 1: return $("#tab-two").val();
-        case 2: return $("#tab-three").val();
-        case 3: return $("#tab-four").val();
-        case 4: return $("#tab-five").val();
-        default: console.log("no active tab found");
-            return;
-    }
-}
-
-//update tabs and jsplumb connections
-//when tab change occurs
-function HandleTabChange(activeRef){
-    var locationName = "";
-
-    if(activeRef == "#tabOne"){
-        locationName = $("#tab-one").val();  //e.g. "family1"
-    }else if(activeRef == "#tabTwo"){
-        locationName = $("#tab-two").val();
-    }else if(activeRef == "#tabThree"){
-        locationName = $("#tab-three").val();
-    }else if(activeRef == "#tabFour"){
-        locationName = $("#tab-four").val();
-    }else if(activeRef == "#tabFive"){
-        locationName = $("#tab-five").val();
-    }
-
-    //set tab background
-    var url = window.common.getLocationByName(locationName).background;
-    $("#tab-background").css("background-image", "url("+url+")");
-
-    //update jsPlumb connections
-    refreshConnectionView(locationName);
-}
 
 
 
-//POPOVERS
-//Popover content handlers
+
+
+
+
 //initialise content on login based on existing rules
-function initialisePopContent(){
+/*function initialisePopContent(identifier){
 
-    var cookieValue = $.cookie("physikit");
-    if(cookieValue != undefined) {
+ //get existing rules for this user
+ getExistingConnections(function(connectionList){
+ for(var i=0; i<connectionList.length; i++) {
+ var nextConnection = connectionList[i];
 
-        //get existing rules for this user
-        getExistingConnections(function(connectionList){
-            for(var i=0; i<connectionList.length; i++) {
-                var nextConnection = connectionList[i];
+ var cubeName = nextConnection.cube;
+ var sensorName = nextConnection.smartSensor;
+ var locationName = nextConnection.sensorLoc;
 
-                var cubeName = nextConnection.cube;
-                var sensorName = nextConnection.smartSensor;
-                var locationName = nextConnection.sensorLoc;
+ if (cubeName != undefined) {
+ if (sensorName != undefined) {
+ if (locationName != undefined) {
 
-                if (cubeName != undefined) {
-                    if (sensorName != undefined) {
-                        if (locationName != undefined) {
+ var mode = nextConnection.mode;
+ var setting = nextConnection.setting;
+ var arg = nextConnection.args;
 
-                            var mode = nextConnection.mode;
-                            var setting = nextConnection.setting;
-                            var arg = nextConnection.args;
+ updatePopContent(cubeName, sensorName, locationName, mode, setting, arg);
 
-                            updatePopContent(cubeName, sensorName, locationName, mode, setting, arg);
-
-                        }
-                    }
-                }
-            }
-        });
-    }else{
-        console.log("cookie value is undefined: "+cookieValue);
-    }
-}
-
-//reset popover content on rule removal
-function resetPopContent(cubeName){
-    if (cubeName == "fan") {
-        $("#pk-fan").attr('data-content', "Not connected to any sensor");
-    } else if (cubeName == "light") {
-        $("#pk-led").attr('data-content', "Not connected to any sensor");
-    } else if (cubeName == "move") {
-        $("#pk-motion").attr('data-content', "Not connected to any sensor");
-    } else if (cubeName == "buzz") {
-        $("#pk-vibro").attr('data-content', "Not connected to any sensor");
-    }
-}
-
-//update popover content on new rule creation
-function updatePopContent(cubeName, sensorName, locationName, mode, setting, arg){
-
-    var cubeLabel = window.common.getCubeByName(cubeName).label;
-    var sensorLabel = window.common.getSensorByName(sensorName).label;
-    var locationLabel = window.common.getLocationByName(locationName).label;
-
-    //set sensor and cube labels in dataModel
-    loadDataModel(sensorLabel, cubeLabel);
-
-    //get text for popover
-    var cubeIndex = window.common.getCubeIndexByName(cubeName);
-    var modeText = getModeData(cubeIndex, mode).modeText;
-    var settingText = getSettingData(cubeIndex, mode, setting).settingText;
-    //check if there is any arg text
-    var argText = "";
-    var settingArgs = getSettingData(cubeIndex, mode, setting).settingArgs;
-    if (settingArgs.length > 0) {
-        argText = getArgData(cubeIndex, mode, setting, arg).argText;
-    }
-
-    var popText = "<div>Connected to: <strong>" + sensorLabel + " sensor </strong><br>"
-        + "From: <strong>" + locationLabel + "</strong><br><br>";
-    if (modeText != undefined) {
-        popText = popText + cubeLabel + " cube will: <br>" + modeText + ". It will: ";
-    }
-    if (settingText != undefined) {
-        popText = popText + settingText +". ";
-    }
-    if (argText != "") {
-        popText = popText + argText +".";
-    }
-    popText = popText+"</div>";
-
-    //set text in popover
-    if (cubeName == "fan") {
-        $("#pk-fan").attr('data-content', popText);
-    } else if (cubeName == "light") {
-        $("#pk-led").attr('data-content', popText);
-    } else if (cubeName == "move") {
-        $("#pk-motion").attr('data-content', popText);
-    } else if (cubeName == "buzz") {
-        $("#pk-vibro").attr('data-content', popText);
-    }
-}
-
-
-//Handle UI switches to control Kit
-/*function HandleMainSwitch(cube,state,sendmessage){
- //Grab value and toggle state based on switch state (checked == true)
- var value = (state) ? 255:0;
- var on = (value == 255);
-
- //if state is on:
- // - send the value over socket
- // - adjust the slider and value field
- // - turn off the alert switch if needed
- if(on){
- if(sendmessage)
- Send(cube,0,0,0,value);
- $('#'+cube+'Slider').slider('value', value);
- $('#'+cube+'SliderValue').text(value);
- if($('#'+cube+'AlertCheckbox').get(0).checked)
- $('#'+cube+'AlertCheckbox').bootstrapSwitch("state",!value);
- }
-
- //if state is off:
- // - only send the value over socket if other switch is also off
- // - reset the slider and value field
- if(!on){
- if(!$('#'+cube+'AlertCheckbox').get(0).checked) {
- if(sendmessage)
- Send(cube,0,0,0,value);
- }
- $('#'+cube+'Slider').slider('value', value);
- $('#'+cube+'SliderValue').text(value);
- }
- }
-
- //Handle interval switch for kit
- function HandleSecondarySwitch(cube,state,sendmessage){
- //Grab value and toggle state based on switch state (checked == true)
- var value = (state) ? 255 : 0;
- var on = (value == 255);
-
- //if state is on:
- // - turn the main checkbox switch off
- // - send the value over socket
- if(on){
- $('#'+cube+'Checkbox').bootstrapSwitch("state",!on);
- if(sendmessage)
- Send(cube,1,0,0,value);
- }
-
- //if state is off:
- // - only send the value over socket if main switch is also off
- if(!on){
- if(!$('#'+cube+'Checkbox').get(0).checked) {
- if(sendmessage)
- Send(cube,1,0,0,value);
  }
  }
  }
-
- //Handle slides
- function HandleSliders(cube,value,sendmessage){
- //Send the value over socket
- if(sendmessage)
- Send(cube,0,0,0,value);
-
- //Calculate toggle state based on slider value
- var state = (value>0) ? true : false;
-
- //Set the main switch
- $('#'+cube+'Checkbox').bootstrapSwitch("state",state);
- }
-
- //Generic handler that works for every 'cube' keyword
- //and their representations in the UI.
- //E.g. 'light'
- // -> #lightCheckbox
- // -> #lightAlertCheckbox
- // -> #lightSlider
- // -> #lightSliderValue
- function HandleSwitchEvent(cube,sendmessage){
- //Handle the basic switch event
- $('#'+cube+'Checkbox').on('switchChange.bootstrapSwitch', function(event, state) {
- HandleMainSwitch(cube,state,sendmessage);
- });
-
- //Handle the alert box switch event
- $('#'+cube+'AlertCheckbox').on('switchChange.bootstrapSwitch', function(event, state) {
-
- HandleSecondarySwitch(cube,state,sendmessage);
- });
-
- //Handles the sliders
- $('#'+cube+'Slider').slider({
- orientation: "horizontal",
- range: "min",
- min: 0,
- max: 255,
- value: 0,
-
- //We don't want to send data continuously, so we only
- //send data when the slide adjustment is done
- stop: function (event, ui) {
-
- HandleSliders(cube,ui.value,sendmessage);
- },
-
- //While sliding is going on
- slide: function (event, ui) {
-
- //Update the value field
- $('#'+cube+'SliderValue').text(ui.value);
  }
  });
+ }else{
+ console.log("cookie value is undefined: "+cookieValue);
+ }
  }*/

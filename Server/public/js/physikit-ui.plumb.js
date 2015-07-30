@@ -18,7 +18,7 @@ var connectorPaintStyle = {
         outlineColor: "white"
     },
 
-    //and this is the hidden connector style
+//and this is the hidden connector style
     hiddenPaintStyle = {
         lineWidth: 4,
         strokeStyle: "#61B7CF",
@@ -54,79 +54,79 @@ var connectorPaintStyle = {
         maxConnections: 1,
         dropOptions: { hoverClass: "hover", activeClass: "activated" },
         isTarget: true
-    },
-
-    init = function (connInfo) {
-        //add location name to connection (e.g. "family1")
-        var connection = connInfo.connection;
-        var activeLocation = getActiveLocation();
-        connection.location = activeLocation;
-
-        //get details of sensor and cube for dialog
-        var sensorID = connInfo.sourceId;
-        var boxID = connInfo.targetId;
-
-        //store ID of last connected box for possible removal
-        //due to user cancellation
-        lastConnElementID = boxID;
-
-        //use labels to create rule
-        startDialogs(sensorID, activeLocation, boxID);
-    },
-
-    update = function (connInfo){
-        //delete old rule
-        var connection = connInfo.connection;
-
-        //get sensor name
-        var sensorID = connInfo.originalSourceId;
-        var sensorData = window.common.getSensorById(sensorID);
-        var sensorName = sensorData.name;
-
-        //reset tab for boxElement
-        var boxID = connInfo.originalTargetId;
-        var boxData = window.common.getCubeById(boxID);
-        var boxName = boxData.name;
-
-        //remove rule from server database
-        RemoveRule(sensorName, connection.location, boxName);
-
-        //create new rule
-        //add location name to connection (e.g. "family1")
-        var connection = connInfo.connection;
-        var activeLocation = getActiveLocation();
-        connection.location = activeLocation;
-
-        //get details of sensor and cube for dialog
-        var sensorID = connInfo.newSourceId;
-        var boxID = connInfo.newTargetId;
-
-        //store ID of last connected box for possible removal
-        //due to user cancellation
-        lastConnElementID = boxID;
-
-        //use labels to create rule
-        startDialogs(sensorID, activeLocation, boxID);
-    },
-
-    destroy = function (connInfo){
-        var connection = connInfo.connection;
-
-        //reset tab for boxElement
-        var boxID = connInfo.targetId;
-        var boxData = window.common.getCubeById(boxID);
-        var boxName = boxData.name;
-
-        //get sensor name
-        var sensorID = connInfo.sourceId;
-        var sensorData = window.common.getSensorById(sensorID);
-        var sensorName = sensorData.name;
-
-        showProgressBar("Deleting connection...");
-
-        //remove rule from server database
-        RemoveRule(sensorName, connection.location, boxName);
     };
+
+var init = function (connInfo) {
+    //add location name to connection (e.g. "family1")
+    var connection = connInfo.connection;
+    var activeLocation = getActiveLocation();
+    connection.location = activeLocation;
+
+    //get details of sensor and cube for dialog
+    var sensorID = connInfo.sourceId;
+    var boxID = connInfo.targetId;
+
+    //store ID of last connected box for possible removal
+    //due to user cancellation
+    lastConnElementID = boxID;
+
+    //use labels to create rule
+    startDialogs(sensorID, activeLocation, boxID);
+};
+
+var update = function (connInfo){
+    //delete old rule
+    var connection = connInfo.connection;
+
+    //get sensor name
+    var sensorID = connInfo.originalSourceId;
+    var sensorData = window.common.getSensorById(sensorID);
+    var sensorName = sensorData.name;
+
+    //reset tab for boxElement
+    var boxID = connInfo.originalTargetId;
+    var boxData = window.common.getCubeById(boxID);
+    var boxName = boxData.name;
+
+    //remove rule from server database
+    RemoveRule(sensorName, connection.location, boxName);
+
+    //create new rule
+    //add location name to connection (e.g. "family1")
+    var connection = connInfo.connection;
+    var activeLocation = getActiveLocation();
+    connection.location = activeLocation;
+
+    //get details of sensor and cube for dialog
+    var sensorID = connInfo.newSourceId;
+    var boxID = connInfo.newTargetId;
+
+    //store ID of last connected box for possible removal
+    //due to user cancellation
+    lastConnElementID = boxID;
+
+    //use labels to create rule
+    startDialogs(sensorID, activeLocation, boxID);
+};
+
+var destroy = function (connInfo){
+    var connection = connInfo.connection;
+
+    //reset tab for boxElement
+    var boxID = connInfo.targetId;
+    var boxData = window.common.getCubeById(boxID);
+    var boxName = boxData.name;
+
+    //get sensor name
+    var sensorID = connInfo.sourceId;
+    var sensorData = window.common.getSensorById(sensorID);
+    var sensorName = sensorData.name;
+
+    showProgressBar("Deleting connection...");
+
+    //remove rule from server database
+    RemoveRule(sensorName, connection.location, boxName);
+};
 
 function initialisePlumb() {
     console.log("initialising jsPlumb...");
@@ -222,16 +222,16 @@ function refreshConnectionView(location){
 //once jsplumb in initialised draw all connections to represent existing rules
 /*var drawConnections = function(connectionList){
 
-    for(var i=0; i<connectionList.length; i++){
-        var nextConnection = connectionList[i];
+ for(var i=0; i<connectionList.length; i++){
+ var nextConnection = connectionList[i];
 
-        var target = nextConnection.cube; //(e.g. "fan")
-        var source = nextConnection.smartSensor;  //(e.g. "light")
-        var location = nextConnection.sensorLoc; //(e.g. "family1"))
+ var target = nextConnection.cube; //(e.g. "fan")
+ var source = nextConnection.smartSensor;  //(e.g. "light")
+ var location = nextConnection.sensorLoc; //(e.g. "family1"))
 
-        drawConnection(target, source, location);
-    }
-};*/
+ drawConnection(target, source, location);
+ }
+ };*/
 
 //draw a connection from source (at location) to target
 function drawConnection(target, source, location){
@@ -261,8 +261,8 @@ function drawConnection(target, source, location){
                         drawHiddenConnection(sourceID, targetID, location);
                     }
                 }/*else{
-                    console.log("target already has connection - ignoring this request");
-                }*/
+                 console.log("target already has connection - ignoring this request");
+                 }*/
             }else{
                 console.log("unknown location - ignoring existing connection");
             }
