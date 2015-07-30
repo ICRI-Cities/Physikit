@@ -49,25 +49,25 @@ function Login(url,id){
 
 //after login complete - initalise jsPlumb connections
 //get rules from database
-function getExistingConnections(callback){
-    //Check for cookie todo auto login
-    var cookieValue = $.cookie("physikit");
-    if(cookieValue != undefined){
+/*function getExistingConnections(callback){
+ //Check for cookie todo auto login
+ var cookieValue = $.cookie("physikit");
+ if(cookieValue != undefined){
 
-        var data = {};
-        data.id = cookieValue;
+ var data = {};
+ data.id = cookieValue;
 
-        $.ajax({
-            type: 'POST',
-            data: JSON.stringify(data),
-            contentType: 'application/json',
-            url: url+"getConnections/",
-            success: function(connectionList) {
-                callback(connectionList);
-            }
-        });
-    }
-}
+ $.ajax({
+ type: 'POST',
+ data: JSON.stringify(data),
+ contentType: 'application/json',
+ url: url+"getConnections/",
+ success: function(connectionList) {
+ callback(connectionList);
+ }
+ });
+ }
+ }*/
 
 //Connect the socket with secret
 function connect_socket (id,token) {
@@ -114,6 +114,11 @@ function connect_socket (id,token) {
         //send an it so server know which kit we need
         //socket.emit('id', $.cookie("physikit"));
     });
+
+    //Handles "identifier socket.io event
+    socket.on("identifier", function(identifier)){
+        HandleIdentifierMessage(identifier);
+    }
 
     //Problem with token
     socket.on("error", function(error) {
@@ -220,8 +225,7 @@ $(document).ready(function() {
     else
         Login(url,cookieValue);
 
-    //JQUERY STUFF
-
+    //JQUERY
     //initialise popovers
     $('[data-toggle="popover"]').popover({ html : true });
 
@@ -244,51 +248,29 @@ $(document).ready(function() {
                 //console.log("sliderVal = "+ev.value);
             });
     });
-
-
-    //Initialize accordion
-    /*$("#accordion").accordion({
-        header: "h3"
-    });
-
-    //JQUERY STUFF  Initialize synchronized checkbox slider
-    $("[type='checkbox']").bootstrapSwitch();
-
-    //Initialize slider + switch events
-    HandleSwitchEvent("light",true);
-    HandleSwitchEvent("fan",true);
-    HandleSwitchEvent("buzz",true);
-    HandleSwitchEvent("move",true);*/
 });
 
 //Handles Smart Citizen message and updates UI
 function HandleSmartCitizenMessage(id,data){
-
-    //Todo put them in separate containers
-        //console.log(data);
-        $("#sc").html(
-            "<strong><span style='color: #00ff00'>Connected</span></strong>"
-        );
-
-        console.log(
-            "You are currently connected to a device named "
-            + data.device.title
-            + " that is located in "
-            + data.device.location
-            + ". \n"
-            + "Temperature: "
-            + data.device.posts[0].temp + "\n "
-            + "Humidity: "
-            + data.device.posts[0].hum + "\n"
-            + "CO: "
-            + data.device.posts[0].co + "\n"
-            + "NO2: "
-            + data.device.posts[0].no2 +"\n"
-            + "Light: "
-            + data.device.posts[0].light +"\n"
-            + "Noise: "
-            + data.device.posts[0].noise
-        );
+    console.log(
+        "You are currently connected to a device named "
+        + data.device.title
+        + " that is located in "
+        + data.device.location
+        + ". \n"
+        + "Temperature: "
+        + data.device.posts[0].temp + "\n "
+        + "Humidity: "
+        + data.device.posts[0].hum + "\n"
+        + "CO: "
+        + data.device.posts[0].co + "\n"
+        + "NO2: "
+        + data.device.posts[0].no2 +"\n"
+        + "Light: "
+        + data.device.posts[0].light +"\n"
+        + "Noise: "
+        + data.device.posts[0].noise
+    );
 }
 
 //Handles messages about rule execution
@@ -306,8 +288,7 @@ function HandleNewRuleMessage(rule){
     //update popover with content for new connection
     updatePopContent(rule.cube, rule.smartSensor, rule.sensorLoc, rule.mode, rule.setting, rule.args);
 
-    //close all modals that might be open
-    closeAllModals();
+    hideProgressBar();
 }
 
 
@@ -322,113 +303,96 @@ function HandleRemoveMessage(rule){
     //reset popover content
     resetPopContent(rule.cube);
 
-    //close all modals that might be open
-    closeAllModals();
+    hideProgressBar();
 }
 
-
+//Handles Identifier login message
+function HandleIdentifierMessage(identifier){
+    assignTabs(identifier);
+}
 
 
 //TABS
 //assign location names (families) to tabs based on who has logged in
-function assignTabs(){
+function assignTabs(identifier){
 
-    var cookieValue = $.cookie("physikit");
-    if(cookieValue != undefined) {
+    var locations = window.common.locations();
+    var locIndex = window.common.getLocationIndex(identifier);
 
-        var data = {};
-        data.id = cookieValue;
-
-        //get location names
-        $.ajax({
-            type: 'POST',
-            data: JSON.stringify(data),
-            contentType: 'application/json',
-            url: url+"getLoginLocation/",  //(family name)
-            success: function(location) {
-
-                var locations = window.common.locations();
-                var locIndex = window.common.getLocationIndex(location);
-
-                //do this statically to ensure consistency
-                switch(locIndex){
-                    case 0: $("#tab-one").val(locations[0].name);  //set location name in tab hidden input
-                        $("#tab-two").val(locations[1].name);
-                        $("#tab-three").val(locations[2].name);
-                        $("#tab-four").val(locations[3].name);
-                        $("#tab-five").val(locations[4].name);
-                        $("#tab1-label").html(locations[0].label); //set labels on tabs
-                        $("#tab2-label").html(locations[1].label);
-                        $("#tab3-label").html(locations[2].label);
-                        $("#tab4-label").html(locations[3].label);
-                        $("#tab5-label").html(locations[4].label);
-                        var url = locations[0].background;
-                        $("#tab-background").css("background-image", "url("+url+")");
-                        break;
-                    case 1: $("#tab-one").val(locations[1].name);
-                        $("#tab-two").val(locations[0].name);
-                        $("#tab-three").val(locations[2].name);
-                        $("#tab-four").val(locations[3].name);
-                        $("#tab-five").val(locations[4].name);
-                        $("#tab1-label").html(locations[1].label);
-                        $("#tab2-label").html(locations[0].label);
-                        $("#tab3-label").html(locations[2].label);
-                        $("#tab4-label").html(locations[3].label);
-                        $("#tab5-label").html(locations[4].label);
-                        var url = locations[1].background;
-                        $("#tab-background").css("background-image", "url("+url+")");
-                        break;
-                    case 2: $("#tab-one").val(locations[2].name);
-                        $("#tab-two").val(locations[0].name);
-                        $("#tab-three").val(locations[1].name);
-                        $("#tab-four").val(locations[3].name);
-                        $("#tab-five").val(locations[4].name);
-                        $("#tab1-label").html(locations[2].label);
-                        $("#tab2-label").html(locations[0].label);
-                        $("#tab3-label").html(locations[1].label);
-                        $("#tab4-label").html(locations[3].label);
-                        $("#tab5-label").html(locations[4].label);
-                        var url = locations[2].background;
-                        $("#tab-background").css("background-image", "url("+url+")");
-                        break;
-                    case 3: $("#tab-one").val(locations[3].name);
-                        $("#tab-two").val(locations[0].name);
-                        $("#tab-three").val(locations[1].name);
-                        $("#tab-four").val(locations[2].name);
-                        $("#tab-five").val(locations[4].name);
-                        $("#tab1-label").html(locations[3].label);
-                        $("#tab2-label").html(locations[0].label);
-                        $("#tab3-label").html(locations[1].label);
-                        $("#tab4-label").html(locations[2].label);
-                        $("#tab5-label").html(locations[4].label);
-                        var url = locations[3].background;
-                        $("#tab-background").css("background-image", "url("+url+")");
-                        break;
-                    case 4: $("#tab-one").val(locations[4].name);
-                        $("#tab-two").val(locations[0].name);
-                        $("#tab-three").val(locations[1].name);
-                        $("#tab-four").val(locations[2].name);
-                        $("#tab-five").val(locations[3].name);
-                        $("#tab1-label").html(locations[4].label);
-                        $("#tab2-label").html(locations[0].label);
-                        $("#tab3-label").html(locations[1].label);
-                        $("#tab4-label").html(locations[2].label);
-                        $("#tab5-label").html(locations[3].label);
-                        var url = locations[4].background;
-                        $("#tab-background").css("background-image", "url("+url+")");
-                        break;
-                    default: console.log("tabs not assigned!");
-                        return;
-                }
-            }
-        });
-
-        //set active tab
-        $( "#location_tabs" ).tabs().tabs({ active: 0 });
-    }else{
-        console.log("cookie value is undefined: "+cookieValue);
+    //do this statically to ensure consistency
+    switch(locIndex){
+        case 0: $("#tab-one").val(locations[0].name);  //set location name in tab hidden input
+            $("#tab-two").val(locations[1].name);
+            $("#tab-three").val(locations[2].name);
+            $("#tab-four").val(locations[3].name);
+            $("#tab-five").val(locations[4].name);
+            $("#tab1-label").html(locations[0].label); //set labels on tabs
+            $("#tab2-label").html(locations[1].label);
+            $("#tab3-label").html(locations[2].label);
+            $("#tab4-label").html(locations[3].label);
+            $("#tab5-label").html(locations[4].label);
+            var url = locations[0].background;
+            $("#tab-background").css("background-image", "url("+url+")");
+            break;
+        case 1: $("#tab-one").val(locations[1].name);
+            $("#tab-two").val(locations[0].name);
+            $("#tab-three").val(locations[2].name);
+            $("#tab-four").val(locations[3].name);
+            $("#tab-five").val(locations[4].name);
+            $("#tab1-label").html(locations[1].label);
+            $("#tab2-label").html(locations[0].label);
+            $("#tab3-label").html(locations[2].label);
+            $("#tab4-label").html(locations[3].label);
+            $("#tab5-label").html(locations[4].label);
+            var url = locations[1].background;
+            $("#tab-background").css("background-image", "url("+url+")");
+            break;
+        case 2: $("#tab-one").val(locations[2].name);
+            $("#tab-two").val(locations[0].name);
+            $("#tab-three").val(locations[1].name);
+            $("#tab-four").val(locations[3].name);
+            $("#tab-five").val(locations[4].name);
+            $("#tab1-label").html(locations[2].label);
+            $("#tab2-label").html(locations[0].label);
+            $("#tab3-label").html(locations[1].label);
+            $("#tab4-label").html(locations[3].label);
+            $("#tab5-label").html(locations[4].label);
+            var url = locations[2].background;
+            $("#tab-background").css("background-image", "url("+url+")");
+            break;
+        case 3: $("#tab-one").val(locations[3].name);
+            $("#tab-two").val(locations[0].name);
+            $("#tab-three").val(locations[1].name);
+            $("#tab-four").val(locations[2].name);
+            $("#tab-five").val(locations[4].name);
+            $("#tab1-label").html(locations[3].label);
+            $("#tab2-label").html(locations[0].label);
+            $("#tab3-label").html(locations[1].label);
+            $("#tab4-label").html(locations[2].label);
+            $("#tab5-label").html(locations[4].label);
+            var url = locations[3].background;
+            $("#tab-background").css("background-image", "url("+url+")");
+            break;
+        case 4: $("#tab-one").val(locations[4].name);
+            $("#tab-two").val(locations[0].name);
+            $("#tab-three").val(locations[1].name);
+            $("#tab-four").val(locations[2].name);
+            $("#tab-five").val(locations[3].name);
+            $("#tab1-label").html(locations[4].label);
+            $("#tab2-label").html(locations[0].label);
+            $("#tab3-label").html(locations[1].label);
+            $("#tab4-label").html(locations[2].label);
+            $("#tab5-label").html(locations[3].label);
+            var url = locations[4].background;
+            $("#tab-background").css("background-image", "url("+url+")");
+            break;
+        default: console.log("tabs not assigned!");
+            return;
     }
+    //set active tab
+    $( "#location_tabs" ).tabs().tabs({ active: 0 });
 }
+
 
 //get the currently active tab and return the location
 //associated with this tab

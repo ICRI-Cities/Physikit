@@ -9,9 +9,6 @@ var connectorPaintStyle = {
         lineWidth: 4,
         strokeStyle: "#61B7CF",
         "dashstyle": "none"
-        //joinstyle: "round",
-        //outlineColor: "white",
-        //outlineWidth: 2
     },
 // .. and this is the hover style.
     connectorHoverStyle = {
@@ -24,7 +21,6 @@ var connectorPaintStyle = {
     //and this is the hidden connector style
     hiddenPaintStyle = {
         lineWidth: 4,
-        //joinstyle: "round",
         strokeStyle: "#61B7CF",
         "dashstyle": "2 4"
     },
@@ -49,13 +45,6 @@ var connectorPaintStyle = {
         maxConnection: 0,
         connectorHoverStyle: connectorHoverStyle,
         dragOptions: {}
-        /*overlays: [
-         [ "Label", {
-         location: [0.5, 1.5],
-         label: "Drag",
-         cssClass: "endpointSourceLabel"
-         } ]
-         ]*/
     },
 // the definition of target endpoints (will appear when the user drags a connection)
     targetEndpoint = {
@@ -65,41 +54,85 @@ var connectorPaintStyle = {
         maxConnections: 1,
         dropOptions: { hoverClass: "hover", activeClass: "activated" },
         isTarget: true
-        /*overlays: [
-         [ "Label", { location: [0.5, -0.5], label: "Drop", cssClass: "endpointTargetLabel" } ]
-         ]*/
     },
-    init = function (connection) {
-        //connection.getOverlay("label").setLabel(connection.sourceId.substring(15) + "-" + connection.targetId.substring(15));
+
+    init = function (connInfo) {
+        //add location name to connection (e.g. "family1")
+        var connection = connInfo.connection;
+        var activeLocation = getActiveLocation();
+        connection.location = activeLocation;
+
+        //get details of sensor and cube for dialog
+        var sensorID = connInfo.sourceId;
+        var boxID = connInfo.targetId;
+
+        //store ID of last connected box for possible removal
+        //due to user cancellation
+        lastConnElementID = boxID;
+
+        //use labels to create rule
+        startDialogs(sensorID, activeLocation, boxID);
+    },
+
+    update = function (connInfo){
+        //delete old rule
+        var connection = connInfo.connection;
+
+        //get sensor name
+        var sensorID = connInfo.originalSourceId;
+        var sensorData = window.common.getSensorById(sensorID);
+        var sensorName = sensorData.name;
+
+        //reset tab for boxElement
+        var boxID = connInfo.originalTargetId;
+        var boxData = window.common.getCubeById(boxID);
+        var boxName = boxData.name;
+
+        //remove rule from server database
+        RemoveRule(sensorName, connection.location, boxName);
+
+        //create new rule
+        //add location name to connection (e.g. "family1")
+        var connection = connInfo.connection;
+        var activeLocation = getActiveLocation();
+        connection.location = activeLocation;
+
+        //get details of sensor and cube for dialog
+        var sensorID = connInfo.newSourceId;
+        var boxID = connInfo.newTargetId;
+
+        //store ID of last connected box for possible removal
+        //due to user cancellation
+        lastConnElementID = boxID;
+
+        //use labels to create rule
+        startDialogs(sensorID, activeLocation, boxID);
+    },
+
+    destroy = function (connInfo){
+        var connection = connInfo.connection;
+
+        //reset tab for boxElement
+        var boxID = connInfo.targetId;
+        var boxData = window.common.getCubeById(boxID);
+        var boxName = boxData.name;
+
+        //get sensor name
+        var sensorID = connInfo.sourceId;
+        var sensorData = window.common.getSensorById(sensorID);
+        var sensorName = sensorData.name;
+
+        showProgressBar("Deleting connection...");
+
+        //remove rule from server database
+        RemoveRule(sensorName, connection.location, boxName);
     };
-
-//don't initalise jsPlumb elements until after login
-//this ensures all elements get properly initialised with their relative positions
-//jsPlumb.ready(function(){
-    //var cookieValue = $.cookie("physikit");
-    //if(cookieValue != undefined){
-
-        //initialise();
-
-
-    //}
-//});
 
 function initialisePlumb() {
     console.log("initialising jsPlumb...");
     instance = jsPlumb.getInstance({
         // default drag options
         DragOptions: { cursor: 'pointer', zIndex: 2000 },
-        // the overlays to decorate each connection with.  note that the label overlay uses a function to generate the label text; in this
-        // case it returns the 'labelText' member that we set on each connection in the 'init' method below.
-        /*ConnectionOverlays: [
-            [ "Arrow", { location: 1 } ]
-            [ "Label", {
-                location: 0.1,
-                id: "label",
-                cssClass: "aLabel"
-            }]
-        ],*/
         Container: "flowchart-demo"
     });
 
@@ -107,9 +140,6 @@ function initialisePlumb() {
         connector: "StateMachine",
         paintStyle: { strokeStyle: "#61B7CF", lineWidth: 4 },
         hoverPaintStyle: { strokeStyle: "blue" }
-        /*overlays: [
-         "Arrow"
-         ]*/
     };
 
     instance.registerConnectionType("basic", basicType);
@@ -147,58 +177,26 @@ function initialisePlumb() {
             _addEndpoints(boxElements[i].id, [], ["LeftMiddle"]);
         }
 
-        // listen for new connections; initialise them the same way we initialise the connections at startup.
+        // listen for new connections; create rule
         instance.bind("connection", function (connInfo, originalEvent) {
-
             if(triggerDialog){
-                init(connInfo.connection);
-
-                //add location name to connection (e.g. "family1")
-                var connection = connInfo.connection;
-                var activeLocation = getActiveLocation();
-                connection.location = activeLocation;
-
-                //get details of box for dialog
-                var boxID = connInfo.targetId;
-                var boxData = window.common.getCubeById(boxID);
-
-                //store ID of last connected box for possible removal
-                //due to user cancellation
-                lastConnElementID = boxID;
-
-                //get details of sensor for dialog
-                var sensorID = connInfo.sourceId;
-                var sensorData = window.common.getSensorById(sensorID);
-
-                //use labels to create rule
-                startDialogs(sensorData, activeLocation, boxData);
+                init(connInfo);
             }
         });
 
+        //listen for removed connections; delete rule from database
         instance.bind("connectionDetached", function(connInfo, originalEvent){
-            var connection = connInfo.connection;
+            destroy(connInfo);
+        });
 
-            //reset tab for boxElement
-            var boxID = connInfo.targetId;
-            var boxData = window.common.getCubeById(boxID);
-            var boxName = boxData.name;
-
-            //get sensor name
-            var sensorID = connInfo.sourceId;
-            var sensorData = window.common.getSensorById(sensorID);
-            var sensorName = sensorData.name;
-
-            //show progress bar modal
-            $("#waitText").html("Deleting connection...");
-            $("#confirmModal").modal();
-
-            //remove rule from server database
-            RemoveRule(sensorName, connection.location, boxName);
+        //listen for moved connections; delete old rule and create new one
+        instance.bind("connectionMoved", function(connInfo, originalEvent){
+            update(connInfo);
         });
     });
 
     //get existing connections from database and handle in callback
-    getExistingConnections(drawConnections);
+    //getExistingConnections(drawConnections);
 }
 
 function refreshConnectionView(location){
@@ -222,7 +220,7 @@ function refreshConnectionView(location){
 }
 
 //once jsplumb in initialised draw all connections to represent existing rules
-var drawConnections = function(connectionList){
+/*var drawConnections = function(connectionList){
 
     for(var i=0; i<connectionList.length; i++){
         var nextConnection = connectionList[i];
@@ -233,7 +231,7 @@ var drawConnections = function(connectionList){
 
         drawConnection(target, source, location);
     }
-};
+};*/
 
 //draw a connection from source (at location) to target
 function drawConnection(target, source, location){
@@ -305,13 +303,9 @@ function drawVisibleConnection(sourceID, targetID, location){
     connection.location = location;
 }
 
-function deleteConnection(targetID){
-    instance.detachAllConnections(targetID);
+function deleteConnection(endpoint){
+    instance.detachAllConnections(endpoint);
 }
-
-/*function connectionExists(target, source, location){
-
-}*/
 
 //cancel current connection creation (aborted by user mid process)
 function cancelConnection(){
