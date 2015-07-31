@@ -6,11 +6,24 @@
 var moment = require('moment');
 var fs = require('fs');
 var colors = require('colors');
+var Database = require('./Database');
 var sprintf=require("sprintf-js").sprintf;
+
+var db = new Database();
 
 exports.output = false;
 exports.details = false;
 exports.disablePhysikitCalls = false;
+exports.dataLog = function(source,type,msg){
+    var data = {};
+    data.sender = source;
+    data.type = type;
+    data.msg = msg;
+    data.time = moment().format("D MMM HH:mm:ss:ms");
+
+    db.Add("log",data);
+}
+
 exports.log = function(text,source,type) {
 
     var time = moment().format("D MMM HH:mm:ss") + " - ";

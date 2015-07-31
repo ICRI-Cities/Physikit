@@ -29,7 +29,6 @@ var SmartCitizenKitCollection = require('./SmartCitizenKitCollection');
 
 //Physikit classes
 var User = require('./User');
-var Rule = require('./Rule');
 var common = require('./public/common');
 
 //Grab the private keys
@@ -54,7 +53,6 @@ process.argv.forEach(function(val, index, array) {
     if(val == "-o") debug.output= true;
     if(val == "-od") debug.details = true;
     if(val == "-np") debug.disablePhysikitCalls = true;
-
 });
 
 /**
@@ -78,32 +76,6 @@ app.post('/api',function(req,res){
     });
 });
 
-app.post('/api/getConnections', function(req,res){
-    //check if user exists in database
-    FindUser(req.body.id, function(result) {
-        if(result == ""){
-           res.send("405 access denied");
-           return;
-        }
-
-        Find("rules", "id", result[0].id, function(list){
-            res.send(list);
-        });
-    });
-});
-
-app.post('/api/getLoginLocation', function(req,res){
-    //check if user exists in database
-    FindUser(req.body.id, function(result) {
-        if(result == ""){
-            res.send("405 access denied");
-            return;
-        }
-        res.send(result[0].name);
-    })
-});
-
-
 /**
  * All the smart citizen kits
  */
@@ -118,6 +90,7 @@ kit.on('DataReceived', function(id,data) {
     //Send the data to all clients
     io.emit('smartcitizen',id,data);
 
+    debug.dataLog("SCK Manager","Info","Data received from kit: " + id.toString());
     //Since we have new data, we need to run all rules
     RunRulesBySck("Smart Citizen kit "+id+" reported new data.",id);
 });
@@ -141,9 +114,10 @@ function RunRulesByClient(reason, id){
             db.FindByField("rules","id",id.toString(),function(list){
 
                 if(debug.details) debug.spacer();
-
+                debug.dataLog("Rule Engine","Info","Client connected with id: "+ id.toString()+ " , so I'm running all their rules");
                 list.forEach(function (rule) {
                     //Run rule
+
                     RunRule(rule);
                     io.to(rule.id).emit('newRule',rule);
                 });
@@ -170,7 +144,7 @@ function RunAllRules(reason){
         //Add spacer
         if(debug.details) debug.spacer();
 
-
+        debug.dataLog("Rule Engine","Info","Server started, so I'm running all rules");
         list.forEach(function (rule) {
 
             RunRule(rule);
@@ -209,6 +183,7 @@ function RunRulesBySck(reason,id){
             if(rule.sensorLoc == loc){
 
                 debug.log("Running rule: "+JSON.stringify(rule)+" for kit:"+id,"Rule Engine");
+                debug.dataLog("Rule Engine","Run rule",JSON.stringify(rule));
                 //Run rule
                 RunRule(rule);
             }
@@ -594,6 +569,8 @@ io.on('connection', function(socket){
 
         socket.emit("identifier",result[0].name);
 
+        debug.dataLog("Server","Client Connect","Client with id:"+result[0].id);
+
         //Grab all the smart citizen kits
         kit.kits.forEach(function(kit){
 
@@ -746,6 +723,8 @@ function AddRule(rule,callback){
                     //Run the new rule
                     RunRule(rule);
 
+                    debug.dataLog("Rule Engine","Added",JSON.stringify(rule));
+
                     //Callback
                     var data = {};
                     data.code = 200;
@@ -789,8 +768,6 @@ function RemoveRule(rule,callback){
             return;
         }
 
-
-
         //check if requested rule exists for this cube
         FindRule(rule.id, rule.cube, rule.smartSensor,rule.sensorLoc, function (ruleResult) {
 
@@ -807,6 +784,8 @@ function RemoveRule(rule,callback){
                         UpdatePhysikit(rule.id,rule.cube,0,0,0,0);
 
                         io.to(rule.id).emit('remove',rule);
+
+                        debug.dataLog("Rule Engine","Remove",JSON.stringify(rule));
                     }
 
                     //Error -> rule did not exist
@@ -850,105 +829,5 @@ httpApp.listen(process.env.PORT || 3000, function(){
         debug.log('server running on *:3000',"Physikit Server","Success");
 
     RunAllRules("Server started");
-});
-
-/**----------------------------------------------------------------------------------------------------------------
- * debug rest calls that need to be remove when deployed, these
- * are NOT secure and violate REST, but can be used to test
- * functions from the browser!!
- *----------------------------------------------------------------------------------------------------------------*/
-
-// http://localhost/api/1/kit/light/0/0/0/255
-app.get('/api/:id/kit/:cube/:mode/:setting/:args/:value', function(req, res){
-    UpdatePhysikit(req.params.id,req.params.cube,
-        req.params.mode,req.params.setting,req.params.args,req.params.value);
-    res.send("200, OK")
-});
-
-// http://localhost/api/3/rules
-app.get('/api/:id/rules',function(req,res){
-    FindUser(req.params.id, function(result){
-        if(result =="")
-        {
-            res.send("405 access denied")
-            return;
-        }
-
-        db.FindByField("rules","id",result[0].id,function(list)
-        {
-            res.send(list);
-        });
-    });
-});
-
-// http://localhost/api/3/rules/co2/1/light/>10/0-0-0-255
-app.get('/api/:id/rules/:smartSensor/:smartId/:cube/:condition/:mode/:setting/:args/:value',function(req,res){
-
-    var rule = new Rule(
-        "rule",
-        req.params.id,
-        req.params.smartId,
-        req.params.smartSensor,
-        req.params.cube,
-        req.params.condition,
-        req.params.mode,
-        req.params.setting,
-        req.params.args,
-        req.params.value);
-
-        AddRule(rule, function(result){
-            res.json(result)
-        });
-});
-
-// http://localhost/api/users/666/newUser
-app.get('/api/users/:newId/:name',function(req, res){
-
-    var usr = new User("user", req.params.newId);
-    usr.name = req.params.name;
-    db.Add("users", usr);
-    res.send(usr);
-});
-
-// http://localhost/api/1/rules
-app.get('/api/:id/rules/',function(req, res){
-    FindUser(req.params.id, function(result) {
-        if (result == "") {
-            res.send("405 access denied")
-            return;
-        }
-        db.FindByField("rules","id", result[0].id, function (list) {
-            res.send(list);
-        });
-    });
-});
-
-// http://localhost/api/1/users
-app.get('/api/:id/users/',function(req, res){
-    FindUser(req.params.id, function(result) {
-        if (result == "") {
-            res.send("405 access denied")
-            return;
-        }
-        db.FindAll("users", function (list) {
-            res.send(list);
-        });
-    });
-});
-
-
-app.get('/api/:method/:value1/:value2',function(req,res){
-
-    switch(req.params.method){
-        case "relative":
-
-            break;
-        case "mapping":
-
-            break;
-        case "alert":
-
-            break;
-        default: res.send("No valid method");
-     }
+    debug.dataLog("server","info","I'm starting");
 });
