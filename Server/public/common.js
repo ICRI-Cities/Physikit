@@ -5,13 +5,13 @@
 (function(exports){
 
     var sensorList = [
-        {id: "sc-temp", name: "temp", label: "Temperature", min:0, max:45,
-            sliderVals:[8, 15, 23, 30, 38],
-            sem1:"Cold day",  //at 18 deg C
-            sem2:"Average UK summer",  //at 15 deg C
-            sem3:"Room temperature",  //at 23 deg C
-            sem4:"Average Spanish summer",  //at 30 deg C
-            sem5:"Body temperature"}, //at 38 deg C
+        {id: "sc-temp", name: "temp", label: "Temperature", min:5, max:45,
+            sliderVals:[12, 19, 26, 33, 40],
+            sem1:"Average UK day",  //at 12 deg C
+            sem2:"Room temperature",  //at 19 deg C
+            sem3:"Average Spanish summer",  //at 26 deg C
+            sem4:"Sahara desert",  //at 33 deg C
+            sem5:"Steam room"}, //at 40 deg C
 
         {id: "sc-hum", name: "hum", label: "Humidity", min:0, max:100,
             sliderVals:[17,33,50,67,83],
@@ -39,13 +39,13 @@
             sem4:"No more than 4 hours exposure",  //at 0.25 ppm
             sem5:"No more than 1 hour exposure"}, //at 1 ppm
 
-        {id: "sc-light", name: "light", label: "Light", min:0, max:40000,
-            sliderVals:[5,300,500,5000,30000],
-            sem1:"Street lighting",  //at 5 lux
-            sem2:"Reading light",  //at 300 lux
-            sem3:"Well lit office",  //at 500 lux
-            sem4:"Cloudy sky",  //at 5000 lux
-            sem5:"Sunny day"}, //at 30000 lux
+        {id: "sc-light", name: "light", label: "Light", min:0, max:5000,
+            sliderVals:[20,100,300,1000,3000],
+            sem1:"Street lights",  //at 20 lux
+            sem2:"Living room lights",  //at 100 lux
+            sem3:"Office lights",  //at 300 lux
+            sem4:"Overcast day",  //at 1000 lux
+            sem5:"Daylight"}, //at 3000 lux
 
         {id: "sc-noise", name: "noise", label: "Noise", min:0, max:120,
             sliderVals:[20,40,60,80,100],
