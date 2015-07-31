@@ -39,7 +39,7 @@
             sem4:"No more than 4 hours exposure",  //at 0.25 ppm
             sem5:"No more than 1 hour exposure"}, //at 1 ppm
 
-        {id: "sc-light", name: "light", label: "Light", min:0, max:5000,
+        {id: "sc-light", name: "light", label: "Light", min:0, max:1000,
             sliderVals:[20,100,300,1000,3000],
             sem1:"Street lights",  //at 20 lux
             sem2:"Living room lights",  //at 100 lux
