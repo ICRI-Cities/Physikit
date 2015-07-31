@@ -110,7 +110,6 @@ var update = function (connInfo){
 };
 
 var destroy = function (connInfo){
-    console.log("inside the destroy method");
     var connection = connInfo.connection;
 
     //reset tab for boxElement

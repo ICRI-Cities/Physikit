@@ -25,11 +25,11 @@ function loadDataModel(sensorLabel, boxLabel) {
                                 argQuestion: "Which fans should be used?",
                                 settingArgs: [
                                     {
-                                        argText: "<small><em>Using fan A only</em></small>",
+                                        argText: "<small><em>Using big fan only</em></small>",
                                         imageURL: "ui/sketches/fan1a.png"
                                     },
                                     {
-                                        argText: "<small><em>Using fan B only</em></small>",
+                                        argText: "<small><em>Using small fan only</em></small>",
                                         imageURL: "ui/sketches/fan1b.png"
                                     },
                                     {
@@ -51,11 +51,11 @@ function loadDataModel(sensorLabel, boxLabel) {
                                 argQuestion: "Which fans should be used?",
                                 settingArgs: [
                                     {
-                                        argText: "<small><em>Using fan A only</em></small>",
+                                        argText: "<small><em>Using big fan only</em></small>",
                                         imageURL: "ui/sketches/fan2a.png"
                                     },
                                     {
-                                        argText: "<small><em>Using fan B only</em></small>",
+                                        argText: "<small><em>Using small fan only</em></small>",
                                         imageURL: "ui/sketches/fan2b.png"
                                     },
                                     {
@@ -77,11 +77,11 @@ function loadDataModel(sensorLabel, boxLabel) {
                                 argQuestion: "Please choose the fan pattern",
                                 settingArgs: [
                                     {
-                                        argText: "<small><em>Using fan A when LOWER and fan B when HIGHER</small></em>",
+                                        argText: "<small><em>Using big fan when LOWER and small fan when HIGHER</small></em>",
                                         imageURL: "ui/sketches/fan3a.png"
                                     },
                                     {
-                                        argText: "<small><em>Using fan B when LOWER and fan A when HIGHER</small></em>",
+                                        argText: "<small><em>Using big fan when LOWER and small fan when HIGHER</small></em>",
                                         imageURL: "ui/sketches/fan3b.png"
                                     }
                                 ]
@@ -460,7 +460,7 @@ function getBuzz00Text(sensor){
 }
 
 function getBuzz01Text(sensor){
-    return "<small><em>Change the vibration speed to show the current <strong>"
+    return "<small><em>Pulse at different speeds to show the current <strong>"
         + sensor + "</strong> level</em></small>";
 }
 
@@ -475,6 +475,6 @@ function getBuzz2Text(sensor){
 }
 
 function getBuzz20Text(sensor){
-    return "<small><em>Vibrate faster when higher, slower when lower and not at all when <strong>"
+    return "<small><em>Vibrate in a fast pattern when higher, in a slow pattern when lower and not at all when <strong>"
         + sensor + "</strong> levels stay the same</em></small>";
 }
