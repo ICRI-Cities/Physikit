@@ -7,6 +7,10 @@
    color:white;
 }
 
+#alertSlider{
+   height:100px;
+}
+
 .ui-state-active a, .ui-state-hover a, .ui-state-visited a, .ui-state-focus a  {
    outline: none;
 }

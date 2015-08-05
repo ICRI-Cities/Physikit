@@ -100,7 +100,7 @@ function loadDataModel(sensorLabel, boxLabel) {
                         modeSettings: [
                             {
                                 settingText: getLight00Text(sensor),
-                                imageURL: "ui/sketches/light1a.png",
+                                   imageURL: "ui/sketches/light1a.png",
                                 argQuestion: "",
                                 settingArgs: []
                             },
