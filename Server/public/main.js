@@ -211,8 +211,7 @@ $(document).ready(function() {
         $('input:hidden[name=sliderVal]').val(1);
 
         //handle slides
-        $('#alertSlider').slider()
-            .on('slideStop', function(ev){
+        $('#alertSlider').bootstrapSlider().on('slideStop', function(ev){
                 $('input:hidden[name=sliderVal]').val(ev.value);
                 //console.log("sliderVal = "+ev.value);
             });

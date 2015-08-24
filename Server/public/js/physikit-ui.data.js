@@ -81,7 +81,7 @@ function loadDataModel(sensorLabel, boxLabel) {
                                         imageURL: "ui/sketches/fan3a.png"
                                     },
                                     {
-                                        argText: "<small><em>Using big fan when LOWER and small fan when HIGHER</small></em>",
+                                        argText: "<small><em>Using big fan when HIGHER and small fan when LOWER</small></em>",
                                         imageURL: "ui/sketches/fan3b.png"
                                     }
                                 ]
@@ -100,7 +100,7 @@ function loadDataModel(sensorLabel, boxLabel) {
                         modeSettings: [
                             {
                                 settingText: getLight00Text(sensor),
-                                imageURL: "ui/sketches/light1a.png",
+                                   imageURL: "ui/sketches/light1a.png",
                                 argQuestion: "",
                                 settingArgs: []
                             },

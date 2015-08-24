@@ -345,7 +345,7 @@ function getSliderHtml(){
 
     + "<table><tr>"
     + "<td width='40'><b>Low</b></td>"
-    + "<td><input id='alertSlider' style='width: 400px;' type='text'"
+    + "<td><input data-slider-handle='square' id='alertSlider' style='width: 400px;' type='text'"
     + "data-slider-min='1' data-slider-max='5' data-slider-step='1'"
     + "data-slider-value='1' data-slider-tooltip='hide' width='500'/></td>"
     + "<td width='40' align='right'><b>High</b></td></tr>"

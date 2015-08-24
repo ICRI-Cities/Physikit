@@ -14,6 +14,7 @@
     <link href="css/jsplumb.css" rel="stylesheet">
     <link href="css/plumbView.css" rel="stylesheet">
     <link href="css/main.css" rel="stylesheet">
+    <link href="css/bootstrap-slider.css" rel="stylesheet">
 </head>
 
 <body>
@@ -36,12 +37,16 @@
             <form onsubmit="HandleLogIn()" class="navbar-form navbar-right" role="form">
                 <div class="form-group" id="loginForm">
                     <input id="logIn" type="text" placeholder="id" class="form-control"/>
-                    <button onclick="HandleLogIn()"  class="btn" type="button">Log In</button>
+                    <button onclick="HandleLogIn()" class="btn btn-default" type="button">Log In</button>
                 </div>
                 <div class="form-group" id="loggedInForm">
                     <ul class="nav navbar-nav navbar-right">
                         <li class="dropdown">
-                            <a> <i class="glyphicon glyphicon-user white"></i> <span id="username"></span><b class="caret"></b></a>
+
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                               aria-expanded="false" >
+                                <i class="glyphicon glyphicon-user white"></i><span id="username"></span> <span class="caret"></span></a>
+
                             <ul class="dropdown-menu">
                                 <li>
                                     <a class="btn" onclick="HandleLogOut()">Log out</a>
@@ -257,6 +262,7 @@
     <!-- JQuery -->
     <script src="js/vendor/jquery.js"></script>
     <script src="js/vendor/jquery-ui-custom.min.js"></script>
+    <script src="js/vendor/jquery.ui.touch-punch.min.js"></script>
 
     <!--Bootstrap-->
     <script src="js/vendor/bootstrap.js"></script>
