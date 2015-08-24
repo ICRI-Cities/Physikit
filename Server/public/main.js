@@ -114,12 +114,15 @@ function connect_socket (id,token) {
 //setting: 0-9
 //value: 0-9
 function Send(cube,sensor,sensorLoc,mode,setting,args,condition){
+
+    var id = window.common.getIdByLoc(sensorLoc);
+
     var data =
     {
         type: "rule",
         id : $.cookie("physikit"),
         smartSensor :  sensor,
-        smartId :$.cookie("physikit"),
+        smartId :id,
         sensorLoc: sensorLoc,
         cube : cube,
         condition : condition,
@@ -130,6 +133,7 @@ function Send(cube,sensor,sensorLoc,mode,setting,args,condition){
     };
     socket.emit('rule',data);
 }
+
 
 //Send remove message to physikit node app
 //triggered by the removal of a connection on the web UI
