@@ -178,9 +178,7 @@ function RunRulesBySck(reason,id){
 
         list.forEach(function (rule) {
 
-            var loc = "family" + id;
-
-            if(rule.sensorLoc == loc){
+            if(rule.smartId == id){
 
                 debug.log("Running rule: "+JSON.stringify(rule)+" for kit:"+id,"Rule Engine");
                 debug.dataLog("Rule Engine","Run rule",JSON.stringify(rule));
@@ -703,7 +701,6 @@ function AddRule(rule,callback){
             res.send("405 access denied")
             return;
         }
-
 
         //Check if rule exists for this cube
         FindRule(rule.id,rule.cube,rule.smartSensor,rule.sensorLoc,function(ruleResult){

@@ -63,6 +63,14 @@
         {id: "pk-vibro", name: "buzz", label: "Vibration"}
     ];
 
+    var idList = [
+        {name:"family1",id:"1456"},
+        {name:"family2",id:"2345"},
+        {name:"family3",id:"3124"},
+        {name:"family4",id:"4321"},
+        {name:"family5",id:"5123"}
+    ]
+
     var locationList = [
         {name: "family1", label: "House A", background: "ui/sketches/house1.jpg"},
         {name: "family2", label: "House B", background: "ui/sketches/house2.jpg"},
@@ -82,6 +90,17 @@
     exports.locations = function(){
         return locationList;
     }
+    exports.ids = function(){
+        return idList;
+    }
+
+    exports.getIdByLoc = function(loc){
+        for(var i=0; i<idList.length; i++){
+            if(idList[i].name == loc){
+                return idList[i].id;
+            }
+        }
+    };
 
     //helper methods
     exports.getCubeByName = function (cubeName) {
